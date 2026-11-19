@@ -32,6 +32,28 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
 
+  # Separate from `format` so that job stays fast. Later milestones add schema validation,
+  # html-validate, link checks and the browser tests here (docs/plan.md §8).
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Reads the pnpm version from `packageManager` in package.json.
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      # Also compiles the Paraglide messages, so a missing message key fails here.
+      - run: pnpm check
+      - run: pnpm build
+
   actionlint:
     name: actionlint
     runs-on: ubuntu-latest

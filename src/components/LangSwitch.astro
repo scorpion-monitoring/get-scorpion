@@ -1,0 +1,32 @@
+---
+// Language switcher: plain links, no JavaScript, and no redirect by Accept-Language
+// (docs/plan.md §5). Each link names its language in that language and carries `lang`, so screen
+// readers pronounce it correctly. The current page is marked with aria-current.
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { m } from '../paraglide/messages.js';
+import { locales, type Locale } from '../paraglide/runtime.js';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+---
+
+<nav aria-label={m.lang_switch_label({}, { locale })}>
+  <ul class="flex gap-1">
+    {locales.map((l) => (
+      <li>
+        <a
+          href={getRelativeLocaleUrl(l)}
+          lang={l}
+          hreflang={l}
+          aria-current={l === locale ? 'page' : undefined}
+          class="inline-flex min-h-6 min-w-6 items-center rounded-field px-3 py-2 text-sm underline underline-offset-4 hover:decoration-2 aria-[current=page]:font-bold aria-[current=page]:no-underline"
+        >
+          {m.locale_name({}, { locale: l })}
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>

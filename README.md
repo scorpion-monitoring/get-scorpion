@@ -23,15 +23,29 @@ The reviewed plan, with the stack, the page sections, the events feed, CI and de
 
 ## Run locally
 
-_Filled in with M2 (scaffold)._
-
-Prerequisites already fixed: Node.js from [.nvmrc](.nvmrc) and pnpm from `packageManager` in
-[package.json](package.json) (`corepack enable` picks it up).
+You need Node.js from [.nvmrc](.nvmrc) (Node 26) and pnpm from `packageManager` in
+[package.json](package.json). Node 25 and later no longer ship Corepack, so install it once with
+`npm install --global corepack` before enabling it.
 
 ```sh
+corepack enable    # provides the pinned pnpm version
 pnpm install
-pnpm format:check
+pnpm dev           # development server at http://localhost:4321/ (German at /de/)
+pnpm build         # static site in dist/
+pnpm preview       # serves dist/ locally
 ```
+
+Before you open a pull request, run the checks that CI runs:
+
+```sh
+pnpm format:check
+pnpm lint          # ESLint
+pnpm check         # astro check: types, including the message keys
+```
+
+The English and German texts are in [messages/](messages/) (see [CONTRIBUTING.md](CONTRIBUTING.md)).
+The page follows the system colour scheme (`prefers-color-scheme`); to see the dark theme, switch
+your system or browser to dark mode.
 
 ## Deploy
 
