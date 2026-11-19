@@ -1,0 +1,53 @@
+# Dependabot version updates (OpenSSF Scorecard: Dependency-Update-Tool). One grouped pull request for
+# minor and patch updates per ecosystem and week, and a low limit on open pull requests. Majors come as
+# single pull requests. A release has to be 7 days old before it is proposed (cooldown), which keeps
+# freshly compromised versions out. Security updates ignore these limits, groups and the cooldown.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: 'deps'
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: 'ci'
+    groups:
+      actions-minor-patch:
+        update-types: [minor, patch]
+
+  # docker/Dockerfile arrives in M8 (docs/plan.md §9). Moves the tag and the digest of the base images
+  # together.
+  - package-ecosystem: docker
+    directory: /docker
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: 'docker'
+    groups:
+      docker-minor-patch:
+        update-types: [minor, patch]
+    # The build stage stays on the Node LTS line of .nvmrc; a new major is a deliberate change.
+    ignore:
+      - dependency-name: node
+        update-types: ['version-update:semver-major']

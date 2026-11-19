@@ -1,0 +1,3 @@
+# Required reviews stay at 0 while there is one maintainer, so this requests a review and blocks
+# nothing. When a second maintainer joins, they are requested automatically.
+* @feserm
