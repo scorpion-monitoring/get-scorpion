@@ -1,6 +1,6 @@
 # Plan: Scorpion landing page (`get-scorpion`)
 
-Status: reviewed, 2026-11-19. M1 (bootstrap) is done; corrections found during M1 are folded in below.
+Status: reviewed, 2026-11-19. M1 (bootstrap) and M2 (scaffold) are done; corrections found during them are folded in below.
 
 This is the public landing page at `https://scorpion.bi.denbi.de/`. It belongs to neither
 instance (`/denbi/`, `/nfdi/`) and lives outside the application repo
@@ -85,9 +85,9 @@ make poor marketing copy.
 ## 5. Project structure, build and preview
 
 ```
-astro.config.mjs        # output: 'static', site, i18n { defaultLocale: 'en', locales: ['en','de'], prefixDefaultLocale: false }
+astro.config.mjs        # output: 'static', site, i18n { defaultLocale: 'en', locales: ['en','de'], routing: { prefixDefaultLocale: false } }
 messages/{en,de}.json   # Paraglide JS (inlang) messages, compiled, typed, tree-shaken
-project.inlang/         # Paraglide project settings
+project.inlang/         # Paraglide project settings; the message-format plugin is loaded from node_modules, not a CDN
 src/pages/index.astro, src/pages/de/index.astro   # both render <Landing locale=…>
 src/components/         # Nav, Hero, GetStarted, Events, Instances, Features, Funding, Footer, LangSwitch
 src/data/               # links.yaml, instances.yaml, funders.yaml, screenshots.yaml
@@ -100,8 +100,18 @@ docker/                 # Dockerfile, nginx.conf
 public/                 # robots.txt, favicon.svg, events/events.json (empty fallback)
 ```
 
-- i18n: Astro's built-in i18n routing combined with **Paraglide JS 2** for strings (maintained, compile-time, no runtime loader). M2 includes a short check that it integrates cleanly (§12.9); M1 sets up no Astro code. The page never redirects automatically by `Accept-Language`. It sets `<html lang>`, `hreflang` alternates and a visible EN/DE switcher.
-- Commands: `pnpm install`, `pnpm dev`, `pnpm build` (runs fetch-docs-export first), `pnpm preview`, and `docker compose up` to preview the real nginx config. Node LTS is pinned in `.nvmrc` and `engines.node` (Node 26, LTS since 2026-10-28), pnpm in `packageManager` (pnpm 12). The application repo is still on Node 24 and pnpm 10; the two need not move together.
+- i18n: Astro's built-in i18n routing combined with **Paraglide JS 3** for strings (maintained, compile-time, no runtime loader). Checked in M2 (§12.9), with these findings:
+  - Paraglide 3.0 came out on 2026-11-03, and the 2.x line had its last release on 2026-10-28, so we use 3.x. The 3.0 breaking changes (`additionalFiles` and middleware locale splitting removed, Vite output as virtual modules) don't affect a static page.
+  - No adapter package: `@inlang/paraglide-astro` is deprecated on npm. The Vite plugin from `@inlang/paraglide-js` goes into `astro.config.mjs` under `vite.plugins`.
+  - Each page passes its locale to every message call (`m.key({}, { locale })`). This needs no locale strategy, no `setLocale()` and no Astro middleware, and it works with `prefixDefaultLocale: false`. (Paraglide's own SSG guide assumes a prefix for every locale and a middleware.)
+  - `paraglide-js init` points `project.inlang/settings.json` at plugin modules on jsDelivr, which would fetch unpinned code at every build. Instead `@inlang/plugin-message-format` is a dev dependency, pinned by the lockfile, and `modules` names its file in `node_modules`. Module paths resolve from the repository root, not from `project.inlang/`. A wrong path is only a warning, but then every message is missing and `pnpm check` fails.
+  - A key missing from one locale's file falls back to English without a warning. A key-parity check for `messages/` is a candidate for M7.
+  - The output has no inline `<script>`, `<style>` or `style=""`. The built HTML has no script at all, and only one stylesheet. The page never redirects automatically by `Accept-Language`. It sets `<html lang>`, `hreflang` alternates and a visible EN/DE switcher.
+- Commands: `pnpm install`, `pnpm dev`, `pnpm build` (runs fetch-docs-export first, from M4), `pnpm preview`, `pnpm lint`, `pnpm check`, and `docker compose up` to preview the real nginx config. Node LTS is pinned in `.nvmrc` and `engines.node` (Node 26, LTS since 2026-10-28), pnpm in `packageManager` (pnpm 12). The application repo is still on Node 24 and pnpm 10; the two need not move together.
+- Node 25 and later no longer ship Corepack. Locally, run `npm install --global corepack` once before `corepack enable`. CI uses `pnpm/action-setup` and isn't affected.
+- pnpm 12 fails `pnpm install` when a dependency has a build script that isn't allowed (`ERR_PNPM_IGNORED_BUILDS`). In M2 no dependency has one, so there is no `allowBuilds` list and no `pnpm-workspace.yaml`. Astro 7 builds with Vite 8 and rolldown, so esbuild isn't in the tree, and sharp 0.35 installs prebuilt binaries without a script. Add a package to `allowBuilds` in `pnpm-workspace.yaml` only when an install fails this way.
+- pnpm 12 also enforces a minimum release age by default. It rejected an Astro patch released the day before, and `pnpm add` then wrote an exclusion into `pnpm-workspace.yaml` by itself. Don't commit such exclusions; pick the previous version instead.
+- TypeScript stays on 6.0.x: `typescript-eslint` supports `<6.1` and `@astrojs/check` supports `^6`, while TypeScript 7 is current.
 
 ## 6. Theme, assets, accessibility, privacy
 
@@ -166,4 +176,4 @@ Branch protection on `main` (a repository ruleset): pull request required with *
 6. **Logo permissions** for six organisations, plus SVG sources and dark variants.
 7. **German copy** needs a native-speaker review. Feature wording needs your sign-off (§2).
 8. **Screenshots** come from journey runs. Check that they show no real personal data, and that the ones chosen still exist after upstream renames (the build fails if they don't).
-9. **Paraglide on Astro:** confirm in M2. If it fails, use Astro i18n routing with typed JSON dictionaries.
+9. **Paraglide on Astro:** confirmed in M2. Paraglide JS 3 integrates cleanly through its Vite plugin, so the fallback (Astro i18n routing with typed JSON dictionaries) isn't needed. Details are in §5.

@@ -8,17 +8,29 @@ about the application itself belong in the
 
 1. Branch from `main`. Use a short, descriptive branch name, for example `events/denbi-2027` or
    `fix/footer-links`.
-2. Run `pnpm install` and `pnpm format` before you commit. Node.js comes from [.nvmrc](.nvmrc), pnpm
+2. Run `pnpm install`, then `pnpm format`, `pnpm lint` and `pnpm check` before you commit. Node.js comes from [.nvmrc](.nvmrc), pnpm
    from `packageManager` in [package.json](package.json).
 3. Open a pull request against `main`. CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) has to
-   be green: formatting, `actionlint` and `zizmor` for the workflows, and the build checks that later
-   milestones add.
+   be green: formatting, `actionlint` and `zizmor` for the workflows, and the `build` job (ESLint,
+   `astro check` and the build), which later milestones extend.
 4. Pull requests are squash-merged, and the branch is deleted after the merge. `main` takes no direct
    pushes and keeps a linear history.
 
 Changes to workflows must follow the rules in [docs/plan.md](docs/plan.md) §8: `permissions:
 contents: read` at the top level, every action pinned to a full commit SHA with a `# vX.Y.Z` comment,
 `persist-credentials: false` on checkout, and no `pull_request_target`.
+
+## Texts and translations
+
+All visible text lives in [messages/](messages/): `messages/en.json` for English and
+`messages/de.json` for German. Both files must have the **same keys**. A key that is missing in
+`de.json` falls back to English without an error, so check both files when you add or rename one.
+Message keys use `snake_case`, and a placeholder looks like `{name}`.
+
+[Paraglide JS](https://paraglidejs.com) compiles the files into typed functions in `src/paraglide/`
+at build time; that directory is generated and not committed. In a component, call a message with
+the page locale, for example `m.hero_title({}, { locale })`. A misspelled key fails `pnpm check`.
+German copy gets a native-speaker review before release (docs/plan.md §12.7).
 
 ## How-tos
 

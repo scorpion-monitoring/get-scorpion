@@ -1,0 +1,44 @@
+---
+// The page shell. The sections from milestone 3 go into <main>. Canonical URL, meta description and
+// Open Graph tags come with milestone 6 (docs/plan.md §7).
+import { getAbsoluteLocaleUrl } from 'astro:i18n';
+import LangSwitch from '../components/LangSwitch.astro';
+import { m } from '../paraglide/messages.js';
+import { baseLocale, locales, type Locale } from '../paraglide/runtime.js';
+import '../styles/app.css';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const options = { locale };
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{m.page_title({}, options)}</title>
+    {locales.map((l) => (
+      <link rel="alternate" hreflang={l} href={getAbsoluteLocaleUrl(l)} />
+    ))}
+    <link rel="alternate" hreflang="x-default" href={getAbsoluteLocaleUrl(baseLocale)} />
+  </head>
+  <body class="min-h-screen bg-base-100 text-base-content">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-box focus:bg-base-100 focus:px-4 focus:py-2"
+    >
+      {m.skip_to_content({}, options)}
+    </a>
+    <header class="mx-auto flex max-w-5xl justify-end px-4 py-3">
+      <LangSwitch locale={locale} />
+    </header>
+    <main id="main" tabindex="-1" class="mx-auto max-w-5xl px-4 py-12">
+      <h1 class="text-4xl font-bold">{m.hero_title({}, options)}</h1>
+      <slot />
+    </main>
+  </body>
+</html>
