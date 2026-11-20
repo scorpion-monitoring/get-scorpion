@@ -1,0 +1,25 @@
+# A hackathon: an Event with "workshops and courses" and the keyword "hackathon".
+id: hack-days
+type: hackathon
+start: 2027-01-18
+end: 2027-01-22
+title:
+  en: Hack days
+  de: Hack-Tage
+summary:
+  en: A fixture hackathon.
+  de: Ein Test-Hackathon.
+location: Göttingen
+url: https://example.org/hack
+host:
+  name: de.NBI / ELIXIR-DE
+  url: https://www.denbi.de/
+  ror: https://ror.org/01vmpm840
+contact:
+  name: Example office
+  email: office@example.org
+address:
+  locality: Göttingen
+  country: DE
+keywords:
+  - service management

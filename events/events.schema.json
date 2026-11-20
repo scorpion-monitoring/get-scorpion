@@ -2,13 +2,18 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/scorpion-monitoring/get-scorpion/blob/main/events/events.schema.json",
   "title": "Scorpion landing page events",
-  "description": "Two schemas in one file. The root (#/$defs/event) is one event file, events/<id>.yaml. #/$defs/feed is events.json, the asset of the rolling `events` release that scripts/build-events.mjs writes and the host fetches (docs/plan.md §4). Rules a schema can't express are checked by scripts/build-events.mjs and src/lib/events.ts: `start` and `end` are real calendar dates of the same kind, `end` is not before `start`, the id equals the file name and is unique, and `url` parses as an https: URL.",
+  "description": "Two schemas in one file. The root (#/$defs/event) is one event file, events/<id>.yaml. #/$defs/feed is events.json, the asset of the rolling `events` release that scripts/build-events.mjs writes and the host fetches (docs/plan.md §4). Rules a schema can't express are checked by scripts/build-events.mjs and src/lib/events.ts: `start` and `end` are real calendar dates of the same kind, `end` is not before `start`, the id equals the file name and is unique, every URL parses as an https: URL without user name or password, and keywords are unique ignoring case. Compatibility (docs/plan.md §4): clients reject entries with unknown fields, so within schemaVersion 1 a field is only ever added as optional, and no event file uses it before the page that knows it is deployed; any other change bumps schemaVersion.",
   "$ref": "#/$defs/event",
   "$defs": {
     "text": {
       "type": "string",
       "minLength": 1,
       "pattern": "\\S"
+    },
+    "httpsUrl": {
+      "type": "string",
+      "maxLength": 500,
+      "pattern": "^https://[^\\s/?#@]+(?:[/?#]\\S*)?$"
     },
     "when": {
       "description": "A date `YYYY-MM-DD` (all-day, a day in Europe/Berlin) or a date-time with seconds optional and an offset, `YYYY-MM-DDTHH:MM[:SS](Z|+HH:MM|-HH:MM)`.",
@@ -18,7 +23,7 @@
     "event": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "start", "end", "title", "summary", "location", "url"],
+      "required": ["id", "type", "start", "end", "title", "summary", "location", "host", "contact"],
       "properties": {
         "id": {
           "description": "Equals the file name without .yaml, for example `denbi-plenary-2027`.",
@@ -26,6 +31,10 @@
           "minLength": 1,
           "maxLength": 64,
           "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "type": {
+          "description": "What kind of event it is. Decides the Bioschemas markup in events.jsonld (docs/plan.md §4): `training` is a Course with a CourseInstance; the others are an Event, `workshop` and `hackathon` with the eventType \"workshops and courses\" (a hackathon also gets the keyword `hackathon`), `meeting` and `conference` with \"meetings and conferences\".",
+          "enum": ["training", "hackathon", "workshop", "meeting", "conference"]
         },
         "start": {
           "description": "First day, or the start time.",
@@ -54,18 +63,108 @@
           }
         },
         "location": {
-          "description": "Where the event takes place, the same in both languages, for example `Göttingen` or `Online`.",
+          "description": "Where the event takes place as shown on the page, the same in both languages, for example `Göttingen` or `Online`.",
           "type": "string",
           "$ref": "#/$defs/text",
           "maxLength": 120
         },
         "url": {
-          "description": "The event's page. https: only.",
+          "description": "The event's own page, https: only. Optional: without it, the event's URL is https://scorpion.bi.denbi.de/#event-<id>, its card on the landing page.",
+          "$ref": "#/$defs/httpsUrl"
+        },
+        "registration": {
+          "description": "Where to register, https: only. Shown as a \"Register\" link.",
+          "$ref": "#/$defs/httpsUrl"
+        },
+        "host": {
+          "description": "The organisation that hosts the event (Bioschemas hostInstitution; the provider of a training).",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name"],
+          "properties": {
+            "name": { "type": "string", "$ref": "#/$defs/text", "maxLength": 120 },
+            "url": { "$ref": "#/$defs/httpsUrl" },
+            "ror": {
+              "description": "ROR id as a URL, for example https://ror.org/01vmpm840.",
+              "type": "string",
+              "maxLength": 40,
+              "pattern": "^https://ror\\.org/0[a-z0-9]{6}[0-9]{2}$"
+            }
+          }
+        },
+        "contact": {
+          "description": "Whom to ask about the event, shown on the page. Preferably an office or function rather than a person. At least one of `email` and `url`.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name"],
+          "minProperties": 2,
+          "properties": {
+            "name": { "type": "string", "$ref": "#/$defs/text", "maxLength": 120 },
+            "email": {
+              "description": "Shown as a mailto: link. No ? # & % or / characters.",
+              "type": "string",
+              "maxLength": 254,
+              "pattern": "^[^\\s@<>()\\[\\]\\\\,;:\"?#&%/]+@[^\\s@<>()\\[\\]\\\\,;:\"?#&%/]+\\.[^\\s@<>()\\[\\]\\\\,;:\"?#&%/]+$"
+            },
+            "url": { "$ref": "#/$defs/httpsUrl" }
+          }
+        },
+        "address": {
+          "description": "The venue's postal address, for the structured data (Place with PostalAddress). The page shows `location`.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["locality", "country"],
+          "properties": {
+            "venue": { "type": "string", "$ref": "#/$defs/text", "maxLength": 120 },
+            "street": { "type": "string", "$ref": "#/$defs/text", "maxLength": 120 },
+            "postalCode": { "type": "string", "$ref": "#/$defs/text", "maxLength": 120 },
+            "locality": { "type": "string", "$ref": "#/$defs/text", "maxLength": 120 },
+            "country": {
+              "description": "ISO 3166-1 alpha-2 code, for example DE.",
+              "type": "string",
+              "pattern": "^[A-Z]{2}$"
+            }
+          }
+        },
+        "mode": {
+          "description": "How a training is delivered (Bioschemas courseMode). Required for `training`, not allowed for other types.",
+          "enum": ["online", "onsite", "blended"]
+        },
+        "keywords": {
+          "description": "Keywords in English, without commas. Required for `training`.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "$ref": "#/$defs/text",
+            "maxLength": 40,
+            "pattern": "^[^,]*$"
+          }
+        },
+        "capacity": {
+          "description": "The maximum number of participants.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "language": {
+          "description": "The language the event is held in, an ISO 639-1 code. Default `en`.",
           "type": "string",
-          "maxLength": 500,
-          "pattern": "^https://[^\\s/?#@]+(?:[/?#]\\S*)?$"
+          "pattern": "^[a-z]{2}$"
+        },
+        "tess": {
+          "description": "false leaves the event out of events.jsonld, which ELIXIR TeSS harvests, for example when TeSS already lists it from another source. It is still shown on the page. Default true.",
+          "type": "boolean"
         }
-      }
+      },
+      "if": { "properties": { "type": { "const": "training" } }, "required": ["type"] },
+      "then": {
+        "properties": { "mode": true, "keywords": true },
+        "required": ["mode", "keywords"]
+      },
+      "else": { "not": { "properties": { "mode": true }, "required": ["mode"] } }
     },
     "feed": {
       "description": "events.json: the upcoming events at the time it was built, sorted by start and then id. Clients still drop events whose end has passed since.",

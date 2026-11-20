@@ -20,15 +20,71 @@ export const PAGE_SIZE = 5;
 export const LOCALES = ['en', 'de'] as const;
 export type EventLocale = (typeof LOCALES)[number];
 
-/** Maximum lengths in characters (UTF-16 code units, as JSON Schema and JavaScript count them). */
-export const LIMITS = { id: 64, title: 120, summary: 400, location: 120, url: 500 } as const;
+/** The landing page (English); an event without `url` links to its card here. */
+export const SITE_URL = 'https://scorpion.bi.denbi.de/';
+
+/** Event types (decision of 2026-11-20, docs/plan.md §1). The order is the schema's. */
+export const EVENT_TYPES = ['training', 'hackathon', 'workshop', 'meeting', 'conference'] as const;
+export type EventType = (typeof EVENT_TYPES)[number];
+
+/** How a training is delivered (Bioschemas courseMode). */
+export const MODES = ['online', 'onsite', 'blended'] as const;
+export type Mode = (typeof MODES)[number];
+
+/**
+ * Maximum lengths in characters (UTF-16 code units, as JSON Schema and JavaScript count them), and
+ * the other numeric limits of the schema. build-events.mjs checks each against the schema.
+ */
+export const LIMITS = {
+  id: 64,
+  title: 120,
+  summary: 400,
+  location: 120,
+  url: 500,
+  name: 120,
+  email: 254,
+  ror: 40,
+  address: 120,
+  keyword: 40,
+  keywords: 10,
+  capacity: 100_000,
+} as const;
 
 export const ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const ROR_PATTERN = /^https:\/\/ror\.org\/0[a-z0-9]{6}[0-9]{2}$/;
+/** An email address that is safe in a mailto: link: no query, fragment, escapes or path. */
+const EMAIL_PATTERN =
+  /^[^\s@<>()[\]\\,;:"?#&%/]+@[^\s@<>()[\]\\,;:"?#&%/]+\.[^\s@<>()[\]\\,;:"?#&%/]+$/;
+const COUNTRY_PATTERN = /^[A-Z]{2}$/;
+const LANGUAGE_PATTERN = /^[a-z]{2}$/;
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const DATE_TIME = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?(Z|[+-]\d{2}:\d{2})$/;
 
+export interface Organisation {
+  name: string;
+  url?: string;
+  /** ROR id as a URL. */
+  ror?: string;
+}
+
+export interface Contact {
+  name: string;
+  email?: string;
+  url?: string;
+}
+
+export interface Address {
+  venue?: string;
+  street?: string;
+  postalCode?: string;
+  locality: string;
+  /** ISO 3166-1 alpha-2. */
+  country: string;
+}
+
 export interface FeedEvent {
   id: string;
+  type: EventType;
   /** `YYYY-MM-DD` (all-day) or `YYYY-MM-DDTHH:MM[:SS]` with `Z` or an offset like `+01:00`. */
   start: string;
   /** Same kind as `start`. For a date, the last day of the event (inclusive). */
@@ -36,7 +92,31 @@ export interface FeedEvent {
   title: Record<EventLocale, string>;
   summary: Record<EventLocale, string>;
   location: string;
-  url: string;
+  /** The event's own page; without it, `eventUrl()` is its card on the landing page. */
+  url?: string;
+  registration?: string;
+  host: Organisation;
+  contact: Contact;
+  address?: Address;
+  /** Required for `training`, absent otherwise. */
+  mode?: Mode;
+  /** English; required for `training`. */
+  keywords?: string[];
+  capacity?: number;
+  /** ISO 639-1; `en` when absent. */
+  language?: string;
+  /** false: left out of events.jsonld (TeSS). */
+  tess?: boolean;
+}
+
+/** The event's URL: its own page, or its card on the (English) landing page. */
+export function eventUrl(event: Pick<FeedEvent, 'id' | 'url'>): string {
+  return event.url ?? `${SITE_URL}#${anchorId(event.id)}`;
+}
+
+/** The id of the event's element on the page, `event-<id>`; ID_PATTERN makes it a safe fragment. */
+export function anchorId(id: string): string {
+  return `event-${id}`;
 }
 
 export interface When {
@@ -182,42 +262,142 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function hasExactly(value: Record<string, unknown>, keys: readonly string[]) {
-  const own = Object.keys(value);
-  return own.length === keys.length && keys.every((key) => Object.hasOwn(value, key));
+/** Only keys from `allowed`, and every key from `required`. */
+function hasKeys(
+  value: Record<string, unknown>,
+  required: readonly string[],
+  allowed: readonly string[],
+) {
+  return (
+    required.every((key) => Object.hasOwn(value, key)) &&
+    Object.keys(value).every((key) => allowed.includes(key))
+  );
 }
 
 function text(value: unknown, max: number): value is string {
   return typeof value === 'string' && value.trim().length > 0 && value.length <= max;
 }
 
+function https(value: unknown): value is string {
+  return text(value, LIMITS.url) && isHttpsUrl(value);
+}
+
+function optional(value: unknown, check: (value: unknown) => boolean) {
+  return value === undefined || check(value);
+}
+
 function localised(value: unknown, max: number) {
   return (
     isRecord(value) &&
-    hasExactly(value, LOCALES) &&
+    hasKeys(value, LOCALES, LOCALES) &&
     LOCALES.every((locale) => text(value[locale], max))
   );
 }
 
-const EVENT_KEYS = ['id', 'start', 'end', 'title', 'summary', 'location', 'url'] as const;
+function isOrganisation(value: unknown) {
+  return (
+    isRecord(value) &&
+    hasKeys(value, ['name'], ['name', 'url', 'ror']) &&
+    text(value.name, LIMITS.name) &&
+    optional(value.url, https) &&
+    optional(value.ror, (ror) => typeof ror === 'string' && ROR_PATTERN.test(ror))
+  );
+}
+
+function isContact(value: unknown) {
+  return (
+    isRecord(value) &&
+    hasKeys(value, ['name'], ['name', 'email', 'url']) &&
+    (value.email !== undefined || value.url !== undefined) &&
+    text(value.name, LIMITS.name) &&
+    optional(value.email, (email) => text(email, LIMITS.email) && EMAIL_PATTERN.test(email)) &&
+    optional(value.url, https)
+  );
+}
+
+function isAddress(value: unknown) {
+  const part = (v: unknown) => text(v, LIMITS.address);
+  return (
+    isRecord(value) &&
+    hasKeys(
+      value,
+      ['locality', 'country'],
+      ['venue', 'street', 'postalCode', 'locality', 'country'],
+    ) &&
+    optional(value.venue, part) &&
+    optional(value.street, part) &&
+    optional(value.postalCode, part) &&
+    part(value.locality) &&
+    typeof value.country === 'string' &&
+    COUNTRY_PATTERN.test(value.country)
+  );
+}
+
+/** A keyword list: 1 to 10 texts without commas, unique ignoring case. */
+export function isKeywordList(value: unknown): value is string[] {
+  if (!Array.isArray(value) || value.length < 1 || value.length > LIMITS.keywords) return false;
+  const seen = new Set<string>();
+  for (const keyword of value) {
+    if (!text(keyword, LIMITS.keyword) || keyword.includes(',')) return false;
+    const key = keyword.trim().toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+  }
+  return true;
+}
+
+const REQUIRED_KEYS = [
+  'id',
+  'type',
+  'start',
+  'end',
+  'title',
+  'summary',
+  'location',
+  'host',
+  'contact',
+] as const;
+const EVENT_KEYS = [
+  ...REQUIRED_KEYS,
+  'url',
+  'registration',
+  'address',
+  'mode',
+  'keywords',
+  'capacity',
+  'language',
+  'tess',
+] as const;
 
 /**
  * The browser's check of one entry of events.json, the same rules as `#/$defs/event` in
  * events/events.schema.json plus `checkTimes`. Everything that comes from the feed is untrusted.
  */
 export function isFeedEvent(value: unknown): value is FeedEvent {
+  if (!isRecord(value) || !hasKeys(value, REQUIRED_KEYS, EVENT_KEYS)) return false;
+  const training = value.type === 'training';
   return (
-    isRecord(value) &&
-    hasExactly(value, EVENT_KEYS) &&
     text(value.id, LIMITS.id) &&
     ID_PATTERN.test(value.id) &&
+    (EVENT_TYPES as readonly unknown[]).includes(value.type) &&
     typeof value.start === 'string' &&
     typeof value.end === 'string' &&
     localised(value.title, LIMITS.title) &&
     localised(value.summary, LIMITS.summary) &&
     text(value.location, LIMITS.location) &&
-    text(value.url, LIMITS.url) &&
-    isHttpsUrl(value.url) &&
+    optional(value.url, https) &&
+    optional(value.registration, https) &&
+    isOrganisation(value.host) &&
+    isContact(value.contact) &&
+    optional(value.address, isAddress) &&
+    (training ? (MODES as readonly unknown[]).includes(value.mode) : value.mode === undefined) &&
+    (training ? isKeywordList(value.keywords) : optional(value.keywords, isKeywordList)) &&
+    optional(
+      value.capacity,
+      (c) => Number.isInteger(c) && (c as number) >= 1 && (c as number) <= LIMITS.capacity,
+    ) &&
+    optional(value.language, (l) => typeof l === 'string' && LANGUAGE_PATTERN.test(l)) &&
+    optional(value.tess, (t) => typeof t === 'boolean') &&
     checkTimes({ start: value.start, end: value.end }) === undefined
   );
 }

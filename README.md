@@ -50,14 +50,15 @@ Before you open a pull request, run the checks that CI runs:
 ```sh
 pnpm format:check
 pnpm lint          # ESLint
-pnpm events:check  # validates events/*.yaml against events/events.schema.json
-pnpm test          # unit tests (node --test): events feed, structured data, Open Graph images up to date
+pnpm events:check  # validates events/*.yaml against events/events.schema.json and the event rules
+pnpm test          # unit tests (node --test): events feed and events.jsonld (Bioschemas), structured data, Open Graph images
 pnpm check         # message key parity (EN/DE), then astro check: types, message keys, data files
 ```
 
 `pnpm build` ends with `scripts/check-dist.mjs`, which checks the built pages: no inline styles, no
 inline script apart from the one JSON-LD block, canonical and Open Graph URLs, the Bioschemas markup
-against its profile, `robots.txt` and `sitemap.xml`.
+against its profile, the link to `events.jsonld` and the empty fallbacks in `/events/`, `robots.txt`
+and `sitemap.xml`.
 
 `pnpm og-images` makes the Open Graph images (`public/og/{en,de}.png`) and the favicons, which are
 committed. Run it after changing the hero title, the logo or the script; `pnpm test` fails until you
@@ -65,10 +66,14 @@ do. It downloads the Inter font once (pinned by sha256), so it needs network acc
 See [CONTRIBUTING.md](CONTRIBUTING.md#change-the-meta-texts-or-the-open-graph-image).
 
 `pnpm events:build` validates the events and writes the feed, without past events, to the
-git-ignored `.cache/events/events.json` (`--out <file>` for another path, `--now <date-time>` to
-build it for another moment). The page reads `/events/events.json` at runtime; locally that is the
-empty fallback in `public/events/`, so the Upcoming events section stays hidden. To see it, copy a
-built feed there for a moment (don't commit it). How to add an event:
+git-ignored `.cache/events/events.json`, and next to it `events.jsonld`, the Bioschemas markup of the
+same events that [ELIXIR TeSS](https://tess.elixir-europe.org/) harvests (events with `tess: false`
+left out). Options: `--out <file>` and `--out-jsonld <file>` for other paths, `--now <date-time>` to
+build them for another moment, `--check-feed <file>` and `--check-jsonld <file>` to validate a
+published file. The page reads `/events/events.json` at runtime; locally that is the empty fallback in
+`public/events/`, so the Upcoming events section stays hidden. To see it, copy a built feed there for
+a moment (don't commit it). An event's card has the id `event-<id>`, so
+`http://localhost:4321/#event-<id>` opens it. How to add an event and register the TeSS source:
 [CONTRIBUTING.md](CONTRIBUTING.md#add-an-event).
 
 The English and German texts are in [messages/](messages/) (see [CONTRIBUTING.md](CONTRIBUTING.md)).
@@ -81,7 +86,8 @@ _Filled in with M8 (container and deployment)._
 
 ## Contributing, security and licence
 
-- [CONTRIBUTING.md](CONTRIBUTING.md): workflow, adding an event, changing a logo.
+- [CONTRIBUTING.md](CONTRIBUTING.md): workflow, adding an event, registering the TeSS source,
+  changing a logo.
 - [SECURITY.md](SECURITY.md): how to report a vulnerability.
 - Code: [ISC](LICENSE). Logos and screenshots are **not** covered by the ISC licence; see
   [ASSETS.md](ASSETS.md).

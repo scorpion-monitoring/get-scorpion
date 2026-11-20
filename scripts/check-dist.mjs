@@ -8,10 +8,13 @@
 // The landing pages (/ and /de/) carry exactly one JSON-LD block, which parses, contains no `<`,
 // passes the ComputationalTool 1.0-RELEASE check, states the pinned release as softwareVersion and
 // the page language as inLanguage.
+// They also link /events/events.jsonld as `alternate` (docs/plan.md §4), and the empty fallbacks
+// public/events/events.json and events.jsonld are valid and empty.
 // Also: robots.txt names the sitemap, sitemap.xml lists every page in every locale with its
 // alternates, and the Open Graph images exist.
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { validateFeed, validateJsonLdText } from './build-events.mjs';
 import { checkNode } from './lib/bioschemas.mjs';
 import { PROFILE_CHECK, loadComputationalTool } from './lib/structured-data.mjs';
 import { PAGES } from '../src/lib/pages.ts';
@@ -67,6 +70,13 @@ for (const [page, paths] of Object.entries(PAGES)) {
       else fail(where, `unexpected script <script${attributes}>`);
     }
     if (blocks.length > 1) fail(where, `${blocks.length} JSON-LD blocks`);
+    const eventsLink =
+      /<link rel="alternate" type="application\/ld\+json" href="\/events\/events\.jsonld"/.test(
+        html,
+      );
+    if (eventsLink !== (page === 'home')) {
+      fail(where, `events.jsonld link ${eventsLink ? 'not expected' : 'missing'}`);
+    }
     if (page !== 'home') continue;
     if (blocks.length !== 1) {
       fail(where, 'no JSON-LD block');
@@ -103,6 +113,21 @@ for (const paths of Object.values(PAGES)) {
     if (!sitemap.includes(`hreflang="${locale}" href="${url}"`)) {
       fail('dist/sitemap.xml', `no alternate ${locale} ${url}`);
     }
+  }
+}
+
+const feedFile = join(DIST, 'events/events.json');
+const jsonldFile = join(DIST, 'events/events.jsonld');
+if (!existsSync(feedFile) || !existsSync(jsonldFile)) {
+  fail('dist/events/', 'events.json or events.jsonld missing');
+} else {
+  const feed = JSON.parse(readFileSync(feedFile, 'utf8'));
+  for (const problem of validateFeed(feed)) fail('dist/events/events.json', problem);
+  if (feed.events?.length !== 0) fail('dist/events/events.json', 'the fallback must be empty');
+  const jsonld = readFileSync(jsonldFile, 'utf8');
+  for (const problem of validateJsonLdText(jsonld)) fail('dist/events/events.jsonld', problem);
+  if (JSON.parse(jsonld)['@graph']?.length !== 0) {
+    fail('dist/events/events.jsonld', 'the fallback must be empty');
   }
 }
 

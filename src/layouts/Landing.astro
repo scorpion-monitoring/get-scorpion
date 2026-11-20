@@ -1,6 +1,7 @@
 ---
-// The landing page with the sections in the order of docs/plan.md §2, its head metadata (§7) and
-// the Bioschemas structured data.
+// The landing page with the sections in the order of docs/plan.md §2, its head metadata (§7), the
+// Bioschemas structured data, and a link to events.jsonld, the Bioschemas markup of the upcoming
+// events that TeSS harvests (§4).
 import Events from '../components/Events.astro';
 import Features from '../components/Features.astro';
 import Funding from '../components/Funding.astro';
@@ -29,6 +30,13 @@ const options = { locale };
   ogDescription={m.og_description({}, options)}
 >
   <StructuredData slot="head" locale={locale} />
+  <link
+    slot="head"
+    rel="alternate"
+    type="application/ld+json"
+    href="/events/events.jsonld"
+    title={m.events_jsonld_title({}, options)}
+  />
   <Hero locale={locale} />
   <GetStarted locale={locale} />
   <Events locale={locale} />

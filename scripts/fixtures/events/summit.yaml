@@ -1,0 +1,19 @@
+# A conference: an Event with "meetings and conferences".
+id: summit
+type: conference
+start: 2027-05-04
+end: 2027-05-06
+title:
+  en: Summit
+  de: Gipfeltreffen
+summary:
+  en: A fixture conference.
+  de: Eine Testkonferenz.
+location: Berlin
+url: https://example.org/summit
+host:
+  name: Example host
+contact:
+  name: Example office
+  email: office@example.org
+capacity: 300

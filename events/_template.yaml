@@ -1,12 +1,26 @@
 # Template for an event on the landing page (docs/plan.md §4). Copy this file to events/<id>.yaml,
-# fill in every field, and open a pull request; CI checks it against events/events.schema.json.
-# Files whose name starts with "_" are ignored. All fields are required, and no others are allowed.
+# fill it in, and open a pull request; CI checks it against events/events.schema.json. Files whose
+# name starts with "_" are ignored. Fields marked "required" must be there; no other fields than the
+# ones below are allowed. Text is plain text (no HTML or Markdown).
+#
+# Every upcoming event is also published, in English, as Bioschemas JSON-LD in events.jsonld, which
+# ELIXIR TeSS harvests (unless `tess: false`). That is why `host` and `contact` are required.
 
-# Short, unique, lowercase letters, digits and single hyphens (at most 64 characters). Must equal
-# the file name without .yaml, for example denbi-plenary-2027 for events/denbi-plenary-2027.yaml.
+# Required. Short, unique, lowercase letters, digits and single hyphens (at most 64 characters).
+# Must equal the file name without .yaml, for example denbi-plenary-2027 for
+# events/denbi-plenary-2027.yaml.
 id: denbi-plenary-2027
 
-# start and end are either both dates (an all-day event, days in Europe/Berlin) ...
+# Required. One of:
+#   training    a course or school; needs `mode` and `keywords` (Bioschemas Course + CourseInstance)
+#   hackathon   (Bioschemas Event, "workshops and courses", keyword "hackathon" added)
+#   workshop    (Bioschemas Event, "workshops and courses")
+#   meeting     (Bioschemas Event, "meetings and conferences")
+#   conference  (Bioschemas Event, "meetings and conferences")
+# The page shows it as a small label on the event.
+type: meeting
+
+# Required. start and end are either both dates (an all-day event, days in Europe/Berlin) ...
 start: 2027-03-10
 # ... the last day, inclusive. Equal to start for a one-day event.
 end: 2027-03-11
@@ -16,21 +30,91 @@ end: 2027-03-11
 # end must not be before start. The event disappears from the page once its end has passed: after
 # the last day ends in Europe/Berlin, or after the end time.
 
-# The name of the event, at most 120 characters, in English and German.
+# Required. The name of the event, at most 120 characters, in English and German.
 title:
   en: de.NBI plenary meeting 2027
   de: de.NBI-Plenartreffen 2027
 
-# One or two sentences on what the event is about and why Scorpion users may care, at most 400
-# characters, in English and German.
+# Required. One or two sentences on what the event is about and why Scorpion users may care, at
+# most 400 characters, in English and German. TeSS gets the English one.
 summary:
   en: The annual meeting of the de.NBI network, with a session on service monitoring with Scorpion.
   de: Das jährliche Treffen des de.NBI-Netzwerks, mit einer Sitzung zum Service-Monitoring mit Scorpion.
 
-# Where the event takes place, the same in both languages (at most 120 characters), for example a
-# city, a city and venue, or "Online".
+# Required. Where the event takes place as the page shows it, the same in both languages (at most
+# 120 characters), for example a city, a city and venue, or "Online".
 location: Bielefeld
 
-# The event's own page, https:// only (at most 500 characters). The link text on the page is
-# "Event details".
+# Optional. The event's own page, https:// only (at most 500 characters). The page links it as
+# "Event details". Leave it out for an event that has no page of its own: its URL is then its entry
+# on the landing page, https://scorpion.bi.denbi.de/#event-<id>, which is also what TeSS links to.
 url: https://www.denbi.de/
+
+# Optional. Where to register, https:// only. The page shows a "Register" link.
+# registration: https://www.denbi.de/register
+
+# Required. The organisation that hosts the event: its name (at most 120 characters), and
+# optionally its https:// website and ROR id (look it up on https://ror.org/).
+host:
+  name: de.NBI / ELIXIR-DE
+  url: https://www.denbi.de/
+  ror: https://ror.org/01vmpm840
+
+# Required. Whom to ask about the event, shown on the page: a name (at most 120 characters) and an
+# email address, an https:// URL, or both. Prefer an office or function address to a person's.
+contact:
+  name: Events office
+  email: events@example.org
+
+# Optional. The venue's postal address, for TeSS and search engines (the page shows `location`).
+# `locality` and `country` (ISO 3166-1 alpha-2, for example DE) are required; quote a postal code.
+address:
+  venue: Universität Bielefeld
+  street: Universitätsstraße 25
+  postalCode: '33615'
+  locality: Bielefeld
+  country: DE
+
+# Required for training, not allowed for other types: online, onsite or blended.
+# mode: onsite
+
+# Required for training, optional otherwise: 1 to 10 keywords in English, at most 40 characters
+# each, without commas.
+keywords:
+  - research infrastructure
+  - service monitoring
+
+# Optional. The maximum number of participants.
+# capacity: 30
+
+# Optional. The language the event is held in, an ISO 639-1 code. Default: en.
+# language: de
+
+# Optional. false leaves the event out of events.jsonld, so TeSS doesn't list it, for example
+# because TeSS already lists it from the organiser's own page. It still shows on the page.
+# tess: false
+
+# Examples of the type-specific parts:
+#
+# A training without a page of its own, online:
+#   type: training
+#   location: Online
+#   mode: online
+#   keywords: [Scorpion, KPI submission]
+#   registration: https://example.org/register
+#   (no url)
+#
+# A hackathon:
+#   type: hackathon
+#   keywords: [service management]
+#
+# A workshop at a conference:
+#   type: workshop
+#   location: Bielefeld, Universität
+#
+# A meeting:
+#   type: meeting
+#
+# A conference:
+#   type: conference
+#   capacity: 300

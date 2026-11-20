@@ -1,9 +1,10 @@
 name: Events
 
-# Publishes events.json, built from events/*.yaml, as the asset of the rolling `events` release
-# (docs/plan.md §4, §8). The host fetches
-# https://github.com/scorpion-monitoring/get-scorpion/releases/download/events/events.json
-# (from M8); visitors' browsers only ever request /events/events.json on our own origin.
+# Publishes events.json and events.jsonld, built from events/*.yaml, as the assets of the rolling
+# `events` release (docs/plan.md §4, §8). The host fetches both from
+# https://github.com/scorpion-monitoring/get-scorpion/releases/download/events/ (from M8); visitors'
+# browsers only ever request /events/ on our own origin. ELIXIR TeSS harvests events.jsonld, the
+# Bioschemas markup of the same events (from its release URL until M8).
 on:
   push:
     branches: [main]
@@ -11,6 +12,11 @@ on:
       - events/**
       - scripts/build-events.mjs
       - src/lib/events.ts
+      - src/lib/event-jsonld.ts
+      - src/lib/jsonld.ts
+      - scripts/lib/bioschemas.mjs
+      - scripts/lib/event-profiles.mjs
+      - scripts/bioschemas/**
       - .github/workflows/events.yml
   # Daily, to drop past events from the asset (decision of 2026-11-20, docs/plan.md §1). The page
   # filters them anyway.
@@ -45,12 +51,17 @@ jobs:
           node-version-file: .nvmrc
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
-      # Validates every event file, drops past events, sorts, and validates the feed it writes.
-      - run: pnpm events:build --out "$RUNNER_TEMP/events/events.json"
+      # Validates every event file, drops past events, sorts, and validates the feed and the
+      # JSON-LD (against the Bioschemas profiles) it writes.
+      - run: >-
+          pnpm events:build --out "$RUNNER_TEMP/events/events.json"
+          --out-jsonld "$RUNNER_TEMP/events/events.jsonld"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: events-json
-          path: ${{ runner.temp }}/events/events.json
+          path: |
+            ${{ runner.temp }}/events/events.json
+            ${{ runner.temp }}/events/events.jsonld
           if-no-files-found: error
           retention-days: 1
 
@@ -79,8 +90,10 @@ jobs:
               --title "Events feed" \
               --notes "Rolling release of the landing page's events feed (docs/plan.md §4). events.json is replaced by .github/workflows/events.yml; don't edit it by hand."
           fi
-      - name: Upload events.json
-        run: gh release upload events "$RUNNER_TEMP/events/events.json" --clobber
+      - name: Upload events.json and events.jsonld
+        run: |
+          gh release upload events --clobber \
+            "$RUNNER_TEMP/events/events.json" "$RUNNER_TEMP/events/events.jsonld"
 
   verify:
     name: verify
@@ -100,12 +113,15 @@ jobs:
         with:
           name: events-json
           path: ${{ runner.temp }}/built
-      # The public URL the host fetches, without a token.
-      - name: Download and check the published asset
+      # The public URLs the host and TeSS fetch, without a token.
+      - name: Download and check the published assets
         env:
-          ASSET_URL: https://github.com/${{ github.repository }}/releases/download/events/events.json
+          ASSET_BASE: https://github.com/${{ github.repository }}/releases/download/events
         run: |
-          curl -fsSL --retry 5 --retry-all-errors --max-filesize 1000000 \
-            -o "$RUNNER_TEMP/published.json" "$ASSET_URL"
-          node scripts/build-events.mjs --check-feed "$RUNNER_TEMP/published.json"
-          cmp "$RUNNER_TEMP/built/events.json" "$RUNNER_TEMP/published.json"
+          for file in events.json events.jsonld; do
+            curl -fsSL --retry 5 --retry-all-errors --max-filesize 1000000 \
+              -o "$RUNNER_TEMP/published-$file" "$ASSET_BASE/$file"
+            cmp "$RUNNER_TEMP/built/$file" "$RUNNER_TEMP/published-$file"
+          done
+          node scripts/build-events.mjs --check-feed "$RUNNER_TEMP/published-events.json"
+          node scripts/build-events.mjs --check-jsonld "$RUNNER_TEMP/published-events.jsonld"
