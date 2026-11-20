@@ -11,12 +11,11 @@ file in this repository.
 
 | Asset                  | Owner                                                                         | Source URL | Licence or permission | Date | File |
 | ---------------------- | ----------------------------------------------------------------------------- | ---------- | --------------------- | ---- | ---- |
-| de.NBI logo            | de.NBI (German Network for Bioinformatics Infrastructure)                     | –          | permission pending    | –    | –    |
-| ELIXIR-DE logo         | ELIXIR Germany                                                                | –          | permission pending    | –    | –    |
-| NFDI4Biodiversity logo | NFDI4Biodiversity                                                             | –          | permission pending    | –    | –    |
-| NFDI4Microbiota logo   | NFDI4Microbiota                                                               | –          | permission pending    | –    | –    |
-| IPK logo               | Leibniz Institute of Plant Genetics and Crop Plant Research (IPK) Gatersleben | –          | permission pending    | –    | –    |
-| DFG logo               | Deutsche Forschungsgemeinschaft (DFG)                                         | –          | permission pending    | –    | –    |
+| de.NBI logo            | de.NBI (German Network for Bioinformatics Infrastructure)                     | –          | approved    | 20.11.2026    | src/assets/denbi.light.svg    |
+| NFDI logo              | NFDI                                                                          | –          | approved    | 20.11.2026    | src/assets/nfdi.png    |
+| NFDI4Biodiversity logo              | NFDI4Biodiversity                                                                          | –          | approved    | 20.11.2026    | src/assets/nfdi4biodiversity.light.svg    |
+| IPK logo               | Leibniz Institute of Plant Genetics and Crop Plant Research (IPK) Gatersleben | –          | approved    | 20.11.2026    | src/assets/ipk.png    |
+| DFG logo               | Deutsche Forschungsgemeinschaft (DFG)                                         | –          | approved    | 20.11.2026    | src/assets/dfg-funded.png    |
 
 Until a row above has a recorded permission, the page shows a neutral placeholder for that logo (the
 organisation name in a dashed box, with the same alt text). No organisation logo file is committed.
