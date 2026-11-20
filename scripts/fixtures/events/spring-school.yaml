@@ -1,4 +1,6 @@
+# A training with times, an address and every optional field: a Course with a CourseInstance.
 id: spring-school
+type: training
 start: 2027-03-10T09:00:00+01:00
 end: 2027-03-12T16:30+01:00
 title:
@@ -9,3 +11,24 @@ summary:
   de: Eine Testveranstaltung mit Uhrzeiten.
 location: Gatersleben
 url: https://example.org/spring
+registration: https://example.org/spring/register
+host:
+  name: IPK Gatersleben
+  url: https://www.ipk-gatersleben.de/
+  ror: https://ror.org/02skbsp27
+contact:
+  name: Training office
+  email: training@example.org
+  url: https://example.org/contact
+address:
+  venue: IPK
+  street: Corrensstraße 3
+  postalCode: '06466'
+  locality: Seeland
+  country: DE
+mode: blended
+keywords:
+  - KPI monitoring
+  - Scorpion
+capacity: 25
+language: en

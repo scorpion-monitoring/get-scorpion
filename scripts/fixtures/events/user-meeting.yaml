@@ -1,0 +1,19 @@
+# A meeting held in German.
+id: user-meeting
+type: meeting
+start: 2027-02-02T14:00:00+01:00
+end: 2027-02-02T16:00:00+01:00
+title:
+  en: User meeting
+  de: Nutzertreffen
+summary:
+  en: A fixture meeting.
+  de: Ein Testtreffen.
+location: Online
+url: https://example.org/users
+host:
+  name: Example host
+contact:
+  name: Example office
+  email: office@example.org
+language: de

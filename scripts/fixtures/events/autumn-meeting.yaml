@@ -1,4 +1,6 @@
+# Past at the tests' "now" (2026-11-20): in neither events.json nor events.jsonld.
 id: autumn-meeting
+type: meeting
 start: 2026-10-01
 end: 2026-10-02
 title:
@@ -9,3 +11,8 @@ summary:
   de: Eine Testveranstaltung, die vorbei ist.
 location: Bielefeld
 url: https://example.org/autumn
+host:
+  name: Example host
+contact:
+  name: Example office
+  email: office@example.org

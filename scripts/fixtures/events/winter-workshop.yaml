@@ -1,4 +1,6 @@
+# A workshop without a page of its own: its URL is its card on the landing page.
 id: winter-workshop
+type: workshop
 start: 2026-12-01
 end: 2026-12-01
 title:
@@ -8,4 +10,9 @@ summary:
   en: A one-day fixture event.
   de: Eine eintägige Testveranstaltung.
 location: Online
-url: https://example.org/winter
+registration: https://example.org/winter/register
+host:
+  name: Example host
+contact:
+  name: Example office
+  url: https://example.org/contact

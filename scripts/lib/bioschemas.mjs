@@ -1,5 +1,5 @@
-// Offline check of a JSON-LD node against a Bioschemas profile (docs/plan.md §7). Reusable: M6b
-// checks the event markup with it. Needs no network: the profile's JSON schema is vendored in
+// Offline check of a JSON-LD node against a Bioschemas profile (docs/plan.md §7). Reusable: the
+// event markup (M6b, scripts/lib/event-profiles.mjs) is checked with it too. Needs no network: the profile's JSON schema is vendored in
 // scripts/bioschemas/ (source and licence in its README).
 //
 // What is checked:
@@ -11,6 +11,14 @@
 // - no property the profile doesn't know, except those named in `extra` (catches typos);
 // - EDAM terms: properties that expect an EDAM topic or operation hold edamontology.org IRIs of
 //   that kind.
+//
+// Two adaptations of the generated schemas (scripts/bioschemas/README.md), both of which only
+// accept what the profile pages allow:
+// - `oneOf` is read as `anyOf`. The object definitions (Place, PostalAddress, Organization, ...)
+//   don't constrain `@type`, so any object matches several of them and `oneOf` would reject every
+//   structured value, for example a Place as `location`.
+// - The `date` format accepts an ISO 8601 date or date-time. The schemas model DateTime as an
+//   object, so a date-time string such as 2027-03-10T09:00:00+01:00 could match nothing else.
 import { readFileSync } from 'node:fs';
 import { Ajv } from 'ajv';
 
@@ -33,8 +41,9 @@ export function loadProfile(file, url) {
     throw new Error(`${file} is not a Bioschemas profile schema`);
   }
   const ajv = new Ajv({ strict: false, allErrors: true });
-  // The schemas use `format: uri`; Ajv needs the format defined (no ajv-formats dependency).
+  // The schemas use `format: uri` and `date`; Ajv needs them defined (no ajv-formats dependency).
   ajv.addFormat('uri', (value) => URL.canParse(value));
+  ajv.addFormat('date', (value) => ISO_DATE.test(value) && !Number.isNaN(Date.parse(value)));
   const { required = [], recommended = [], optional = [] } = validation;
   /** @type {Record<string, 'topic' | 'operation'>} */
   const edam = {};
@@ -46,12 +55,33 @@ export function loadProfile(file, url) {
   return {
     url,
     type: superClass.slice('schema:'.length),
-    validate: ajv.compile(validation),
+    validate: ajv.compile(oneOfAsAnyOf(validation)),
     required,
     recommended,
     known: new Set([...required, ...recommended, ...optional]),
     edam,
   };
+}
+
+/** An ISO 8601 date, or a date-time with an offset. */
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2}))?$/;
+
+/**
+ * A copy of a schema with every `oneOf` keyword renamed to `anyOf` (see the header).
+ * @param {unknown} schema
+ * @returns {any}
+ */
+function oneOfAsAnyOf(schema) {
+  if (Array.isArray(schema)) return schema.map(oneOfAsAnyOf);
+  if (typeof schema !== 'object' || schema === null) return schema;
+  return Object.fromEntries(
+    Object.entries(schema).map(([key, value]) => [
+      key === 'oneOf' ? 'anyOf' : key,
+      key === 'properties' || key === 'definitions'
+        ? Object.fromEntries(Object.entries(value).map(([k, v]) => [k, oneOfAsAnyOf(v)]))
+        : oneOfAsAnyOf(value),
+    ]),
+  );
 }
 
 /** @param {unknown} value */

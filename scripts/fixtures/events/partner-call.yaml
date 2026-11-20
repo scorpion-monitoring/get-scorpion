@@ -1,0 +1,19 @@
+# Opted out of TeSS: in events.json, but not in events.jsonld.
+id: partner-call
+type: meeting
+start: 2027-02-10
+end: 2027-02-10
+title:
+  en: Partner call
+  de: Partnertreffen
+summary:
+  en: A fixture meeting that TeSS lists from elsewhere.
+  de: Ein Testtreffen, das TeSS von anderswo kennt.
+location: Online
+url: https://example.org/partners
+host:
+  name: Example host
+contact:
+  name: Example office
+  email: office@example.org
+tess: false

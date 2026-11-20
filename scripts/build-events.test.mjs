@@ -4,7 +4,14 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, test } from 'node:test';
-import { buildFeed, parseEventYaml, validateEventFiles, validateFeed } from './build-events.mjs';
+import {
+  buildFeed,
+  buildJsonLd,
+  parseEventYaml,
+  validateEventFiles,
+  validateFeed,
+  validateJsonLdText,
+} from './build-events.mjs';
 import { berlinMidnight, isFeedEvent, isPast, upcomingEvents } from '../src/lib/events.ts';
 
 const FIXTURES = join(import.meta.dirname, 'fixtures', 'events');
@@ -15,6 +22,7 @@ const fixtures = readdirSync(FIXTURES).map((name) => ({
 const NOW = Date.parse('2026-11-20T12:00:00Z');
 
 const valid = `id: demo
+type: workshop
 start: 2027-01-10
 end: 2027-01-11
 title:
@@ -25,7 +33,17 @@ summary:
   de: Eine Demo.
 location: Online
 url: https://example.org/demo
+host:
+  name: Example host
+contact:
+  name: Example office
+  email: office@example.org
 `;
+
+/** `valid` as a training: needs mode and keywords. */
+const training = valid
+  .replace('type: workshop', 'type: training')
+  .concat('mode: online\nkeywords:\n  - Scorpion\n');
 
 /** Errors of `valid` after `change`, as file `name`. */
 function errorsOf(change, name = 'demo.yaml') {
@@ -100,6 +118,99 @@ describe('validateEventFiles', () => {
       (t) => t.replace('https://', 'https://user:pw@'),
       /url: must be an https:\/\/ URL/,
     ],
+    ['a missing type', (t) => t.replace('type: workshop\n', ''), /demo\.yaml: type: is required/],
+    [
+      'an unknown type',
+      (t) => t.replace('type: workshop', 'type: party'),
+      /demo\.yaml: type: must be one of training, hackathon, workshop, meeting, conference/,
+    ],
+    [
+      'a missing host',
+      (t) => t.replace('host:\n  name: Example host\n', ''),
+      /demo\.yaml: host: is required/,
+    ],
+    [
+      'a missing contact',
+      (t) => t.replace(/contact:\n.*\n.*\n$/, ''),
+      /demo\.yaml: contact: is required/,
+    ],
+    [
+      'a contact without email or url',
+      (t) => t.replace('  email: office@example.org\n', ''),
+      /demo\.yaml: contact: needs an email or a url/,
+    ],
+    [
+      'a contact email that is not one',
+      (t) => t.replace('office@example.org', 'office at example.org'),
+      /contact\.email: must be an email address/,
+    ],
+    [
+      'an http: registration URL',
+      (t) => `${t}registration: http://example.org/register\n`,
+      /demo\.yaml: registration: must be an https:\/\/ URL/,
+    ],
+    [
+      'an http: host URL',
+      (t) =>
+        t.replace('  name: Example host\n', '  name: Example host\n  url: http://example.org/\n'),
+      /host\.url: must be an https:\/\/ URL/,
+    ],
+    [
+      'a ROR id that is not one',
+      (t) => t.replace('  name: Example host\n', '  name: Example host\n  ror: 01vmpm840\n'),
+      /host\.ror: must be a ROR id/,
+    ],
+    [
+      'a mode for a type other than training',
+      (t) => `${t}mode: online\n`,
+      /demo\.yaml: \(file\): mode is only allowed for type training/,
+    ],
+    [
+      'an address without country',
+      (t) => `${t}address:\n  locality: Göttingen\n`,
+      /address\.country: is required/,
+    ],
+    [
+      'a country that is not an ISO code',
+      (t) => `${t}address:\n  locality: Göttingen\n  country: Germany\n`,
+      /address\.country: must be an ISO 3166-1 alpha-2 code/,
+    ],
+    [
+      'a keyword with a comma',
+      (t) => `${t}keywords:\n  - a, b\n`,
+      /keywords\.0: must not contain a comma/,
+    ],
+    [
+      'too many keywords',
+      (t) => `${t}keywords:\n${[...'abcdefghijk'].map((k) => `  - ${k}\n`).join('')}`,
+      /keywords: must NOT have more than 10 items/,
+    ],
+    ['a capacity of 0', (t) => `${t}capacity: 0\n`, /capacity: must be >= 1/],
+    ['a language in capitals', (t) => `${t}language: EN\n`, /language: must be an ISO 639-1 code/],
+    ['tess as text', (t) => `${t}tess: "no"\n`, /tess: must be boolean/],
+  ];
+
+  const trainingCases = [
+    [
+      'a training without mode',
+      (t) => t.replace('mode: online\n', ''),
+      /demo\.yaml: mode: is required/,
+    ],
+    [
+      'a training without keywords',
+      (t) => t.replace('keywords:\n  - Scorpion\n', ''),
+      /demo\.yaml: keywords: is required/,
+    ],
+    [
+      'an unknown mode',
+      (t) => t.replace('mode: online', 'mode: hybrid'),
+      /mode: must be one of online, onsite, blended/,
+    ],
+    [
+      'keywords that differ only in case',
+      (t) => `${t}  - scorpion\n`,
+      /keywords: must be unique, ignoring case/,
+    ],
   ];
   for (const [label, change, expected] of cases) {
     test(`rejects ${label}`, () => {
@@ -110,6 +221,40 @@ describe('validateEventFiles', () => {
       );
     });
   }
+  for (const [label, change, expected] of trainingCases) {
+    test(`rejects ${label}`, () => {
+      const errors = errorsOf((t) => change(training.replace(valid, t)));
+      assert.ok(
+        errors.some((e) => expected.test(e)),
+        errors.join('\n'),
+      );
+    });
+  }
+
+  test('accepts every type, a training with mode and keywords, and an event without url', () => {
+    for (const type of ['hackathon', 'workshop', 'meeting', 'conference']) {
+      assert.deepEqual(
+        errorsOf((t) => t.replace('type: workshop', `type: ${type}`)),
+        [],
+        type,
+      );
+    }
+    assert.deepEqual(
+      errorsOf(() => training),
+      [],
+    );
+    assert.deepEqual(
+      errorsOf((t) => t.replace('url: https://example.org/demo\n', '')),
+      [],
+    );
+  });
+
+  test('the template is a valid event', () => {
+    const text = readFileSync(join(import.meta.dirname, '../events/_template.yaml'), 'utf8');
+    const { events, errors } = validateEventFiles([{ name: 'denbi-plenary-2027.yaml', text }]);
+    assert.deepEqual(errors, []);
+    assert.equal(events.length, 1);
+  });
 
   test('rejects an id that does not match the file name', () => {
     const errors = errorsOf((t) => t, 'other.yaml');
@@ -137,7 +282,12 @@ describe('validateEventFiles', () => {
       const parsed = parseEventYaml(change(valid));
       if (parsed.data !== undefined) assert.equal(isFeedEvent(parsed.data), false, label);
     }
+    for (const [label, change] of trainingCases) {
+      const parsed = parseEventYaml(change(training));
+      if (parsed.data !== undefined) assert.equal(isFeedEvent(parsed.data), false, label);
+    }
     assert.equal(isFeedEvent(parseEventYaml(valid).data), true);
+    assert.equal(isFeedEvent(parseEventYaml(training).data), true);
   });
 });
 
@@ -147,12 +297,20 @@ describe('buildFeed', () => {
     assert.deepEqual(errors, []);
     assert.deepEqual(
       events.map((e) => e.id),
-      ['autumn-meeting', 'spring-school', 'winter-workshop'],
+      [
+        'autumn-meeting',
+        'hack-days',
+        'partner-call',
+        'spring-school',
+        'summit',
+        'user-meeting',
+        'winter-workshop',
+      ],
     );
     const feed = buildFeed(events, NOW);
     assert.deepEqual(
       feed.events.map((e) => e.id),
-      ['winter-workshop', 'spring-school'],
+      ['winter-workshop', 'hack-days', 'user-meeting', 'partner-call', 'spring-school', 'summit'],
     );
     assert.equal(feed.schemaVersion, 1);
     assert.deepEqual(validateFeed(feed), []);
@@ -224,8 +382,126 @@ describe('upcomingEvents (the client)', () => {
         { ...ok, title: { en: 'Only English' } },
         { ...ok, extra: true },
         { ...ok, id: 'Bad Id' },
+        { ...ok, type: 'party' },
+        { ...ok, registration: 'http://example.org/' },
+        { ...ok, contact: { name: 'Nobody' } },
+        { ...ok, host: { name: 'Host', url: 'javascript:alert(1)' } },
+        { ...ok, mode: 'online' },
       ],
     };
     assert.deepEqual(upcomingEvents(feed, NOW), [ok]);
+  });
+});
+
+describe('events.jsonld', () => {
+  const { events } = validateEventFiles(fixtures);
+  const feed = buildFeed(events, NOW);
+  const text = buildJsonLd(feed);
+  const doc = JSON.parse(text);
+  const byId = Object.fromEntries(
+    doc['@graph'].map((node) => [node['@id'].replace(/^.*#(?:event|course)-/, ''), node]),
+  );
+
+  test('starts with "{" and passes the profile checks', () => {
+    assert.ok(text.startsWith('{'));
+    assert.deepEqual(validateJsonLdText(text), []);
+  });
+
+  test('holds the upcoming events that are not opted out of TeSS, in feed order', () => {
+    assert.deepEqual(Object.keys(byId), [
+      'winter-workshop',
+      'hack-days',
+      'user-meeting',
+      'spring-school',
+      'summit',
+    ]);
+  });
+
+  test('maps each type to its profile', () => {
+    const types = (id) => [byId[id]['@type'], byId[id].eventType?.name, byId[id].keywords];
+    assert.deepEqual(types('winter-workshop'), ['Event', 'workshops and courses', undefined]);
+    assert.deepEqual(types('hack-days'), [
+      'Event',
+      'workshops and courses',
+      'service management, hackathon',
+    ]);
+    assert.deepEqual(types('user-meeting'), ['Event', 'meetings and conferences', undefined]);
+    assert.deepEqual(types('summit'), ['Event', 'meetings and conferences', undefined]);
+    const course = byId['spring-school'];
+    assert.equal(course['@type'], 'Course');
+    assert.equal(
+      course['dct:conformsTo']['@id'],
+      'https://bioschemas.org/profiles/Course/1.0-RELEASE',
+    );
+    assert.equal(course.keywords, 'KPI monitoring, Scorpion');
+    const instance = course.hasCourseInstance;
+    assert.equal(instance['@type'], 'CourseInstance');
+    assert.equal(instance['@id'], 'https://scorpion.bi.denbi.de/#event-spring-school');
+    assert.equal(instance.courseMode, 'blended');
+    assert.equal(instance.startDate, '2027-03-10T09:00:00+01:00');
+    assert.deepEqual(instance.offers, {
+      '@type': 'Offer',
+      url: 'https://example.org/spring/register',
+    });
+    assert.equal(instance.location.address.postalCode, '06466');
+    assert.equal(byId['user-meeting'].inLanguage, 'de');
+  });
+
+  test('an event without url gets its card on the landing page as url and @id', () => {
+    const node = byId['winter-workshop'];
+    assert.equal(node.url, 'https://scorpion.bi.denbi.de/#event-winter-workshop');
+    assert.equal(node['@id'], node.url);
+    assert.equal(node.location, 'Online');
+  });
+
+  test('the check finds problems', () => {
+    const changed = (change) => {
+      const copy = structuredClone(doc);
+      change(copy['@graph']);
+      return validateJsonLdText(JSON.stringify(copy)).join('\n');
+    };
+    assert.match(validateJsonLdText(`  ${text}`)[0], /must start with/);
+    assert.match(validateJsonLdText('{')[0], /\(document\)/);
+    assert.match(
+      changed((g) => delete g[0].hostInstitution),
+      /Minimum property hostInstitution/,
+    );
+    assert.match(
+      changed((g) => delete g[3].hasCourseInstance.courseMode),
+      /courseMode/,
+    );
+    assert.match(
+      changed((g) => (g[1].url = g[0].url)),
+      /duplicate .*TeSS would merge/,
+    );
+    assert.match(
+      changed((g) => (g[0].eventType.name = 'party')),
+      /vocabulary/,
+    );
+    assert.match(
+      changed((g) => (g[0]['@type'] = 'Thing')),
+      /not Event or Course/,
+    );
+    assert.match(
+      changed((g) => (g[2].startDate = 'soon')),
+      /schema: \/startDate/,
+    );
+  });
+
+  test('escapes every < in the text', () => {
+    const xss = '</script><img src=x onerror=alert(1)>';
+    const event = { ...feed.events[0], title: { en: xss, de: xss } };
+    const out = buildJsonLd({ schemaVersion: 1, events: [event] });
+    assert.ok(!out.includes('<'));
+    assert.equal(JSON.parse(out)['@graph'][0].name, xss);
+  });
+
+  test('an empty feed gives an empty graph', () => {
+    const empty = JSON.parse(buildJsonLd({ schemaVersion: 1, events: [] }));
+    assert.deepEqual(empty['@graph'], []);
+    assert.deepEqual(
+      JSON.parse(readFileSync(join(import.meta.dirname, '../public/events/events.jsonld'), 'utf8')),
+      empty,
+    );
   });
 });

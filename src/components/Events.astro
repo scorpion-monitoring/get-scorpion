@@ -5,11 +5,14 @@
 // without JavaScript, with an empty or broken feed, it never appears.
 //
 // Every visible string is rendered here from messages/ in the page locale; the script carries no
-// text. It fills a copy of the <template> per event, using textContent only, and replaces
-// `{page}` and `{pages}` in `data-page-status`. With more than PAGE_SIZE events (src/lib/events.ts)
-// the pager appears.
+// text. It fills a copy of the <template> per event, using textContent only, takes the type label
+// from `data-type-<type>`, and replaces `{page}` and `{pages}` in `data-page-status`. With more than
+// PAGE_SIZE events (src/lib/events.ts) the pager appears. Each event's <li> gets
+// id="event-<id>", so https://scorpion.bi.denbi.de/#event-<id> (the URL of an event without a page
+// of its own, also in events.jsonld) opens the pager page that holds it and focuses its <h3>.
 import { m } from '../paraglide/messages.js';
 import type { Locale } from '../paraglide/runtime.js';
+import type { EventType } from '../lib/events';
 
 interface Props {
   locale: Locale;
@@ -17,6 +20,18 @@ interface Props {
 
 const { locale } = Astro.props;
 const options = { locale };
+const typeLabels: Record<EventType, string> = {
+  training: m.events_type_training({}, options),
+  hackathon: m.events_type_hackathon({}, options),
+  workshop: m.events_type_workshop({}, options),
+  meeting: m.events_type_meeting({}, options),
+  conference: m.events_type_conference({}, options),
+};
+const typeData = Object.fromEntries(
+  Object.entries(typeLabels).map(([type, label]) => [`data-type-${type}`, label]),
+);
+const link =
+  'inline-block py-0.5 font-semibold text-primary underline underline-offset-4 hover:decoration-2';
 ---
 
 <section
@@ -26,6 +41,7 @@ const options = { locale };
   hidden
   data-events
   data-page-status={m.events_page_status({ page: '{page}', pages: '{pages}' }, options)}
+  {...typeData}
 >
   <h2 id="events-title" class="text-3xl font-bold">
     {m.events_title({}, options)}
@@ -47,21 +63,33 @@ const options = { locale };
   </nav>
   <template data-events-item>
     <li class="flex min-w-0 flex-col rounded-box border border-base-300 bg-base-200 p-6 wrap-anywhere">
-      <h3 class="text-xl font-semibold" data-field="title"></h3>
-      <dl class="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1">
+      <h3 class="scroll-mt-6 text-xl font-semibold" tabindex="-1" data-field="title"></h3>
+      <p class="mt-2">
+        <span class="badge badge-outline" data-field="type"></span>
+      </p>
+      <dl class="mt-2 grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 gap-y-1">
         <dt class="font-semibold">{m.events_when({}, options)}</dt>
         <dd data-field="when"></dd>
         <dt class="font-semibold">{m.events_where({}, options)}</dt>
         <dd data-field="location"></dd>
+        <dt class="font-semibold">{m.events_contact({}, options)}</dt>
+        <dd class="flex flex-wrap items-baseline gap-x-3">
+          <span data-field="contact-name"></span>
+          <a class={link} data-field="contact-url"></a>
+          <a class={link} data-field="contact-email"></a>
+        </dd>
       </dl>
       <p class="mt-2" data-field="summary"></p>
-      <a
-        class="mt-4 self-start py-0.5 font-semibold text-primary underline underline-offset-4 hover:decoration-2"
-        data-field="url"
-      >
-        {m.events_link({}, options)}
-        <span class="sr-only" data-field="link-title"></span>
-      </a>
+      <p class="mt-4 flex flex-wrap gap-x-6 gap-y-2">
+        <a class={link} data-field="url">
+          {m.events_link({}, options)}
+          <span class="sr-only" data-field="link-title"></span>
+        </a>
+        <a class={link} data-field="registration">
+          {m.events_register({}, options)}
+          <span class="sr-only" data-field="registration-title"></span>
+        </a>
+      </p>
     </li>
   </template>
 </section>

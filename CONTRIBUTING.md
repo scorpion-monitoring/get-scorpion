@@ -41,27 +41,101 @@ German copy gets a native-speaker review before release (docs/plan.md §12.7).
 ### Add an event
 
 1. Copy [events/\_template.yaml](events/_template.yaml) to `events/<id>.yaml`. `<id>` is short and
-   unique, in lowercase letters, digits and single hyphens (for example `denbi-plenary-2027`), and
+   unique, in lowercase letters, digits and single hyphens (for example `denbi-ahm-2027`), and
    the `id` field must be the same as the file name.
-2. Fill in every field; the comments in the template explain them. `start` and `end` are both dates
-   (`2027-03-10`, all-day, `end` is the last day) or both date-times with an offset
-   (`2027-03-10T09:00:00+01:00`). Give `title` and `summary` in English (`en`) and German (`de`),
-   and an `https://` `url`.
-3. Run `pnpm events:check`. It names the file and the field of every problem. `pnpm events:build`
-   also writes the resulting `events.json` to the git-ignored `.cache/events/`, so you can see
-   which events would be published.
-4. Open a pull request. CI runs the same check.
+2. Fill it in; the comments in the template explain every field. All event types need:
+   - `type`: `training`, `hackathon`, `workshop`, `meeting` or `conference`. The page shows it as a
+     label, and it decides the Bioschemas markup for TeSS (docs/plan.md §4).
+   - `start` and `end`: both dates (`2027-03-10`, all-day, `end` is the last day) or both date-times
+     with an offset (`2027-03-10T09:00:00+01:00`).
+   - `title` and `summary` in English (`en`) and German (`de`), and `location` as the page shows it
+     (a city, or "Online").
+   - `host`: the hosting organisation's `name`, optionally its `url` and `ror` id.
+   - `contact`: a `name` and an `email` or a `url` (or both), shown on the page. Prefer an office or
+     function address to a person's.
+3. Depending on the type and the event:
+
+   | Field          | `training`                              | `hackathon`, `workshop`, `meeting`, `conference` |
+   | -------------- | --------------------------------------- | ------------------------------------------------ |
+   | `mode`         | required: `online`, `onsite`, `blended` | not allowed                                      |
+   | `keywords`     | required, 1 to 10, English              | optional (a hackathon gets `hackathon` added)    |
+   | `url`          | optional                                | optional                                         |
+   | `registration` | optional, https                         | optional, https                                  |
+   | `address`      | optional                                | optional                                         |
+   | `capacity`     | optional                                | optional                                         |
+   | `language`     | optional, default `en`                  | optional, default `en`                           |
+   | `tess`         | optional, default `true`                | optional, default `true`                         |
+   - **No page of its own?** Leave out `url`. The event's link is then its entry on the landing
+     page, `https://scorpion.bi.denbi.de/#event-<id>`, which opens the right page of the list and
+     jumps to the event; TeSS links there too. Give a `registration` link and a `contact`, so
+     visitors can act on it.
+   - **Already in TeSS?** If TeSS lists the event from another source (for example the organiser's
+     own page in de.NBI's TeSS entries), set `tess: false`, so it isn't listed twice. It still
+     shows on the landing page.
+   - `address` (`locality` and `country` required, `country` as an ISO code such as `DE`; quote the
+     postal code) helps TeSS place the event on its map.
+
+4. Run `pnpm events:check`. It names the file and the field of every problem. `pnpm events:build`
+   also writes the resulting `events.json` and `events.jsonld` to the git-ignored `.cache/events/`,
+   so you can see what would be published.
+5. Open a pull request. CI runs the same check.
 
 After the merge, [.github/workflows/events.yml](.github/workflows/events.yml) publishes a new
-`events.json` as the asset of the rolling `events` pre-release within a few minutes. It also runs
-daily to drop past events, and can be started by hand (`workflow_dispatch`). **Once M8 is deployed**,
-the host fetches that asset every 15 minutes, so the event is live on the page about 15 minutes after
+`events.json` and `events.jsonld` as the assets of the rolling `events` pre-release within a few
+minutes. It also runs daily to drop past events, and can be started by hand (`workflow_dispatch`).
+TeSS reads `events.jsonld` at its next harvest (see the next how-to). **Once M8 is deployed**, the
+host fetches both assets every 15 minutes, so the event is live on the page about 15 minutes after
 the merge, with no rebuild or restart (docs/plan.md §4). Until then, the event is published to the
 release but not served: the page only shows the empty fallback in `public/events/events.json`.
 
 Past events disappear by themselves: the page drops an event once its `end` has passed (the end of
 that day in Europe/Berlin for a date). The section shows five events per page, and stays hidden when
 there is none. To remove an event earlier, delete its file in a pull request.
+
+**Changing the format:** the page rejects events with fields it doesn't know, so a new field is only
+ever added as optional, and no event file uses it until the page that knows it is deployed. Any
+other change needs a new `schemaVersion` (docs/plan.md §4).
+
+### Register the TeSS source
+
+[ELIXIR TeSS](https://tess.elixir-europe.org/) harvests our upcoming events from `events.jsonld`
+(Bioschemas JSON-LD, docs/plan.md §4). Registering the source is a one-time, manual step in TeSS;
+TeSS administrators approve it.
+
+1. Sign in to TeSS (ELIXIR AAI) and create a **content provider** (Content providers → Register
+   content provider):
+   - **Title:** `Scorpion`
+   - **URL:** `https://scorpion.bi.denbi.de/`
+   - **Contact:** the maintainers' contact address
+   - **Description:** for example "Scorpion is the KPI monitoring software of de.NBI / ELIXIR-DE and
+     the NFDI consortia. This provider lists training, hackathons and other events about Scorpion."
+   - **Type:** `Project`
+   - **Receive content curation emails at this address:** the maintainers' address
+   - **ELIXIR node:** `Germany`
+   - **Keywords:** `Scorpion`, `KPI monitoring`, `research infrastructure`
+   - Image: the Scorpion logo, if you want one.
+2. On the provider's page, open **Sources** → **Add source**:
+   - **URL:** `https://github.com/scorpion-monitoring/get-scorpion/releases/download/events/events.jsonld`
+   - **Ingestion Method:** `Bioschemas`
+   - **Authentication Token:** empty
+   - **Default language:** English
+   - **Enabled:** yes
+   - **Approval status:** request approval
+3. Use **Test** on the source: it shows what TeSS extracts without saving anything. With the current
+   events (all `tess: false`) it finds nothing, which is expected; it must not report a parsing
+   error.
+4. Wait for the approval. TeSS harvests approved sources about once a day; check the provider's
+   events after the first harvest and the log on the source's page.
+
+TeSS matches an event to an earlier harvest by its `url` (within this content provider), so keep an
+event's `id` and `url` stable once it is published. A `training` arrives as "Workshops and courses";
+other types arrive without a TeSS event type, because TeSS doesn't read `eventType` (docs/plan.md
+§12.11). Curators can set it in TeSS.
+
+**At M8:** once `https://scorpion.bi.denbi.de/events/events.jsonld` serves the file (the host timer
+fetches it from the release), you may change the source URL to it. TeSS then needs to approve the
+source again. Event URLs don't change, so TeSS keeps the same events. Keeping the release URL is
+fine too; it doesn't depend on the host timer.
 
 ### Bump the Scorpion release
 
@@ -108,6 +182,9 @@ out why the asset changed.
   LinkedIn's Post Inspector.
 
 ### Change the structured data (Bioschemas)
+
+The event markup (`events.jsonld`) is built from the event files; see "Add an event" and
+docs/plan.md §4. This how-to is about the page's own markup.
 
 The landing page carries Bioschemas
 [ComputationalTool 1.0-RELEASE](https://bioschemas.org/profiles/ComputationalTool/1.0-RELEASE)
