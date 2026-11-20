@@ -14,7 +14,7 @@ instance (`/denbi/`, `/nfdi/`) and lives outside the application repo
 | Repository        | `scorpion-monitoring/get-scorpion`, default branch `main` (created in M1)                            |
 | Deployment        | Container image: unprivileged nginx serving `dist/`, published to GHCR                               |
 | Events            | Runtime feed: adding an event must **not** need an image rebuild or container restart (see §4)       |
-| Legal             | IPK's imprint (EN or DE page to match the locale) and **our own privacy policy** (changed in M6, §1) |
+| Legal             | IPK's imprint and IPK's standard privacy policy, both linked in the page locale (changed in M6b, §1) |
 | Docs / demo / get | Rebuild docs, demo at `https://test.scorpion.bi.denbi.de/`, "Get Scorpion" points to GitHub releases |
 | Contact           | GitHub instead of a mailto link                                                                      |
 | Languages         | English (default, at `/`) and German (`/de/`), using an i18n package                                 |
@@ -52,7 +52,7 @@ Decisions from the M6 question round (2026-11-20):
 | Topic            | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Imprint          | The footer links IPK's imprint in the page locale: `https://www.ipk-gatersleben.de/en/imprint` (EN, "Imprint"), `https://www.ipk-gatersleben.de/impressum` (DE, "Impressum"). `links.yaml` gives such a link `urls: { en, de }`.                                                                                                                                                                                                           |
-| Privacy          | **Not IPK's policy.** Our own page for this static host, `/privacy/` and `/de/datenschutz/`, written from scratch: IPK as controller, contact through IPK's data protection officer (`datenschutz@ipk-gatersleben.de`), nginx access log deleted after **7 days**, no cookies, no tracking, no third-party requests, the events feed fetched server-side. It covers only this host; the instances have their own.                          |
+| Privacy          | IPK's standard privacy policy applies to this site (decision of 2026-11-20). The footer links to it in the page locale (`links.yaml`: EN `/en/data-protection-policy`, DE `/datenschutzerklaerung`), like the imprint. No page of our own. |
 | Meta texts       | Title, meta description and Open Graph title and description per locale as in `messages/` (`page_title`, `meta_description`, `og_title`, `og_description`), approved in the question round.                                                                                                                                                                                                                                                |
 | Twitter/X        | **No** `twitter:*` tags. Sharing previews rely on Open Graph, which LinkedIn reads.                                                                                                                                                                                                                                                                                                                                                        |
 | Structured data  | Bioschemas ComputationalTool 1.0-RELEASE (§7), describing the software. Scorpion is handled as a database: `applicationCategory` "Database portal" and "Web API". Author: IPK (ROR `02skbsp27`) and Manuel Feser (ORCID `0000-0001-6546-1818`); provider: de.NBI (ROR `01vmpm840`, the infrastructure provider); funder: DFG (ROR `018mejw64`); citation: DOI `10.1515/jib-2025-0048`. No bio.tools id, no extra `WebSite`/`WebPage` node. |
@@ -106,7 +106,7 @@ structured data lives in `src/data/*.yaml`, validated by a Zod schema through As
 | 5   | Available instances | de.NBI / ELIXIR-DE and NFDI (the NFDI consortia; renamed in M6): logo, one line, "Visit"                 | `instances.yaml`, msg                                |
 | 6   | Features            | 9 cards (list below)                                                                                     | msg (hand-written); screenshots from the docs export |
 | 7   | Funding and support | de.NBI/ELIXIR-DE (powered by), IPK (hosted by), NFDI4Biodiversity (developed within), DFG (funded by)    | `funders.yaml`                                       |
-| 8   | Footer              | Logo, docs, GitHub, "Contact via GitHub", imprint (IPK, per locale), privacy (own page), release line    | `links.yaml`, msg                                    |
+| 8   | Footer              | Logo, docs, GitHub, "Contact via GitHub", imprint (IPK, per locale), privacy (IPK, per locale), release line    | `links.yaml`, msg                                    |
 
 **Feature cards** (nine, decided 2026-11-20; final wording in `messages/`, signed off in the M4 PR):
 
@@ -162,9 +162,8 @@ astro.config.mjs        # output: 'static', site, i18n { defaultLocale: 'en', lo
 messages/{en,de}.json   # Paraglide JS (inlang) messages, compiled, typed, tree-shaken
 project.inlang/         # Paraglide project settings; the message-format plugin is loaded from node_modules, not a CDN
 src/pages/index.astro, src/pages/de/index.astro   # both render <Landing locale=…>
-src/pages/privacy.astro, src/pages/de/datenschutz.astro   # our privacy policy (<Privacy locale=…>)
 src/pages/sitemap.xml.ts  # /sitemap.xml with hreflang alternates (src/lib/sitemap.ts)
-src/layouts/            # Page (head, nav, main, footer), Landing, Privacy
+src/layouts/            # Page (head, nav, main, footer), Landing
 src/content.config.ts   # content collections for src/data/*.yaml, with Zod schemas
 src/components/         # Nav, Hero, GetStarted, Events, Instances, Features, Funding, Footer, LangSwitch, Logo, ThemedPicture, Icon, GitHubMark, PageHead, StructuredData
 src/lib/                # data and message helpers; generated.ts reads src/assets/generated/; events.ts holds the event rules;
@@ -215,7 +214,7 @@ public/                 # robots.txt, favicon.ico, apple-touch-icon.png, og/{en,
 
 ## 7. SEO and sharing
 
-For each page and locale, `src/components/PageHead.astro` sets the `<title>`, meta description, canonical URL (`https://scorpion.bi.denbi.de/`, `/de/`, `/privacy/`, `/de/datenschutz/`), `hreflang` (en, de, x-default) and Open Graph tags (`og:type`, `og:site_name`, `og:title`, `og:description`, `og:url`, `og:image` with type, size and alt, `og:locale` and `og:locale:alternate`), all absolute on `site`. There are no Twitter/X tags (§1). Page paths per locale live in `src/lib/pages.ts`, which the head, the language switcher and the sitemap share. Texts come from `messages/`.
+For each page and locale, `src/components/PageHead.astro` sets the `<title>`, meta description, canonical URL (`https://scorpion.bi.denbi.de/`, `/de/`), `hreflang` (en, de, x-default) and Open Graph tags (`og:type`, `og:site_name`, `og:title`, `og:description`, `og:url`, `og:image` with type, size and alt, `og:locale` and `og:locale:alternate`), all absolute on `site`. There are no Twitter/X tags (§1). Page paths per locale live in `src/lib/pages.ts`, which the head, the language switcher and the sitemap share. Texts come from `messages/`.
 
 - **Open Graph images:** one 1200×630 PNG per locale in `public/og/`, made by `pnpm og-images` (`scripts/og-images.mjs`), not at build time: rendering SVG text with sharp/librsvg depends on the fonts installed, so CI and local output would differ. The script turns the text into paths with opentype.js and Inter 4.1 (downloaded and checked, see §5), composes the scorpion mark, "Scorpion", the hero title of the locale and the host name on the dark theme, and rasterises with sharp. It also writes the favicons. `scripts/og-images.json` records a hash of the inputs (script, texts, logo, font) and of each output; `pnpm test` fails when the images are stale or edited by hand. `pnpm build` needs no network for them.
 - **Sitemap and robots:** `/sitemap.xml` is a hand-written endpoint (`src/pages/sitemap.xml.ts`), every page in every locale with `xhtml:link` alternates. `public/robots.txt` allows everything and names the sitemap. It applies to the **whole host**, instances included, once the reverse proxy routes `/robots.txt` to the container (M8, §12.1), and deliberately sets no rules for `/denbi/` and `/nfdi/` (§1).
@@ -239,7 +238,7 @@ Branch protection on `main` (a repository ruleset): pull request required with *
 ## 9. Deployment
 
 - `docker/Dockerfile` is multi-stage: `node:<lts>-alpine@sha256:…` builds, then `nginxinc/nginx-unprivileged:<ver>-alpine@sha256:…` serves. The container runs as a non-root user on port 8080 with a read-only root filesystem and `/events/` as a volume. It has a `/healthz` endpoint.
-- `nginx.conf` sets the headers from §6, and access logs are deleted after **7 days**, as the privacy page states (§1, §12.5). Hashed assets get `Cache-Control: immutable` for a year, HTML and `/events/` get `no-cache`, and there is a custom 404. `/events/events.jsonld` is served as `application/ld+json` (nginx's default `mime.types` doesn't know `.jsonld`), `/events/events.json` as `application/json`; TeSS fetches the former server-side, so it needs no CORS header. The container only serves `/`, `/de/`, `/privacy/`, `/de/datenschutz/`, `/robots.txt`, `/sitemap.xml` and assets. Routing `/denbi/` and `/nfdi/` stays with the reverse proxy.
+- `nginx.conf` sets the headers from §6. Hashed assets get `Cache-Control: immutable` for a year, HTML and `/events/` get `no-cache`, and there is a custom 404. `/events/events.jsonld` is served as `application/ld+json` (nginx's default `mime.types` doesn't know `.jsonld`), `/events/events.json` as `application/json`; TeSS fetches the former server-side, so it needs no CORS header. The container only serves `/`, `/de/`, `/robots.txt`, `/sitemap.xml` and assets. Routing `/denbi/` and `/nfdi/` stays with the reverse proxy.
 - Host timer (§4): fetches `events.json` and `events.jsonld` from the `events` release into the `/events/` volume, each checked and replaced atomically, keeping the last good file on a 404 or an invalid download. After the cutover, the TeSS source may move to `https://scorpion.bi.denbi.de/events/events.jsonld` (CONTRIBUTING.md).
 - Rollout: the operator pulls the new tag (or Watchtower/Renovate on the host does). The exact step depends on the open point below.
 
@@ -258,7 +257,7 @@ Branch protection on `main` (a repository ruleset): pull request required with *
 3. **Static sections:** nav, hero, get started, instances, funders and footer, with data files and logos (placeholder logos until permission is confirmed).
 4. **Features and docs export:** the fetch script, `scorpion-release.json`, `pnpm bump-release`, screenshots, feature cards, the version line and the badges.
 5. **Events feed:** schema, template, `build-events.mjs`, client script and `events.yml`, plus the feature card pairing carried over from the M4 review (§2).
-6. **Legal links and metadata:** IPK imprint and our own privacy page, SEO, Open Graph images, favicon, sitemap, robots.txt and Bioschemas JSON-LD.
+6. **Legal links and metadata:** IPK imprint and privacy policy links, SEO, Open Graph images, favicon, sitemap, robots.txt and Bioschemas JSON-LD.
    - **6b. Events for TeSS** (the PR after M6): event types and the fields the profiles and TeSS need, an optional `url` with a link to the event's card, Bioschemas markup for events (the Event or Course profiles, reusing `serializeJsonLd()` and the offline profile check from M6), an `events.jsonld` feed that ELIXIR TeSS can harvest, published by `events.yml`, and a per-event opt-out. Registering the source in TeSS is done by the maintainer after the merge.
 7. **Quality gates:** html-validate, axe/Playwright matrix, lychee jobs, Scorecard, and the scheduled docs-export bump (`upstream.yml`, with a GitHub App token).
 8. **Container and deployment:** Dockerfile, nginx config, `release.yml` and the host-side events timer, followed by the cutover from the old Astro site.
@@ -269,7 +268,7 @@ Branch protection on `main` (a repository ruleset): pull request required with *
 2. ~~**User documentation does not exist yet.**~~ Resolved in M3: it exists as the knowledge base at `https://scorpion-monitoring.github.io/knowledgebase/` (§1).
 3. **The live instances seem to lag behind** (`/denbi/catalog/services` returns 404). Decided in M3: the catalogue isn't linked until the rollout (§1). Still open: when to add it.
 4. ~~**Contact:**~~ Resolved in M3: the new-issue chooser (§1).
-5. **Legal pages:** partly resolved in M6. The imprint is IPK's (EN and DE URLs in `links.yaml`). The privacy policy is our own page (§1), so IPK's policy no longer needs to cover this host. Still open (owner: Manuel Feser, before the M8 cutover): IPK's data protection officer reviews the text, in particular the legal basis (Art. 6(1)(e) GDPR); M8 configures nginx to delete access logs after 7 days, and the reverse proxy's own logs (§12.1) must match what the page says or the page must name them.
+5. **Legal pages:** resolved. The imprint and the privacy policy are IPK's, linked in EN and DE (`links.yaml`), because the standard IPK privacy policy applies to this site (decision of 2026-11-20).
 6. **Logo permissions** for six organisations, plus SVG sources and dark variants.
 7. **German copy** needs a native-speaker review. Feature wording: nine cards decided in M4 (§1); the final copy is signed off in the M4 pull request.
 8. **Screenshots** come from journey runs. Check that they show no real personal data, and that the ones chosen still exist after upstream renames (the build fails if they don't). Checked for v0.16.1: all candidates show generated ids and `example.org` addresses only. `j12/export-button` has overlapping chart axis labels (an upstream rendering issue) and isn't used.

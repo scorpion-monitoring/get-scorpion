@@ -34,10 +34,15 @@ best_practices:
 scorecard:
   url: https://scorecard.dev/viewer/?uri=github.com/scorpion-monitoring/scorpion
   label: link_scorecard
-# IPK's imprint, in the page locale (docs/plan.md §1, decision of 2026-11-20). The privacy policy is
-# our own page (/privacy/, /de/datenschutz/), not IPK's.
+# IPK's imprint and privacy policy, in the page locale (docs/plan.md §1, decision of 2026-11-20).
+# The standard IPK privacy policy applies to this site, so there is no page of our own.
 imprint:
   urls:
     en: https://www.ipk-gatersleben.de/en/imprint
     de: https://www.ipk-gatersleben.de/impressum
   label: link_imprint
+privacy:
+  urls:
+    en: https://www.ipk-gatersleben.de/en/data-protection-policy
+    de: https://www.ipk-gatersleben.de/datenschutzerklaerung
+  label: link_privacy
