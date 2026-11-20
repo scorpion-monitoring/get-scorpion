@@ -12,7 +12,8 @@ about the application itself belong in the
    from `packageManager` in [package.json](package.json).
 3. Open a pull request against `main`. CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) has to
    be green: formatting, `actionlint` and `zizmor` for the workflows, and the `build` job (ESLint,
-   `astro check` and the build, which downloads the pinned docs export), which later milestones extend.
+   `pnpm events:check`, the unit tests, `astro check` and the build, which downloads the pinned docs
+   export), which later milestones extend.
 4. Pull requests are squash-merged, and the branch is deleted after the merge. `main` takes no direct
    pushes and keeps a linear history.
 
@@ -39,16 +40,28 @@ German copy gets a native-speaker review before release (docs/plan.md §12.7).
 
 ### Add an event
 
-_Available from M5 (events feed)._
+1. Copy [events/\_template.yaml](events/_template.yaml) to `events/<id>.yaml`. `<id>` is short and
+   unique, in lowercase letters, digits and single hyphens (for example `denbi-plenary-2027`), and
+   the `id` field must be the same as the file name.
+2. Fill in every field; the comments in the template explain them. `start` and `end` are both dates
+   (`2027-03-10`, all-day, `end` is the last day) or both date-times with an offset
+   (`2027-03-10T09:00:00+01:00`). Give `title` and `summary` in English (`en`) and German (`de`),
+   and an `https://` `url`.
+3. Run `pnpm events:check`. It names the file and the field of every problem. `pnpm events:build`
+   also writes the resulting `events.json` to the git-ignored `.cache/events/`, so you can see
+   which events would be published.
+4. Open a pull request. CI runs the same check.
 
-1. Copy `events/_template.yaml` to `events/<id>.yaml`, where `<id>` is short and unique (for example
-   `denbi-plenary-2027`).
-2. Fill in `start`, `end`, `location` and an `https://` `url`, and give `title` and `summary` in both
-   English (`en`) and German (`de`).
-3. Open a pull request. CI checks the file against `events/events.schema.json`.
+After the merge, [.github/workflows/events.yml](.github/workflows/events.yml) publishes a new
+`events.json` as the asset of the rolling `events` pre-release within a few minutes. It also runs
+daily to drop past events, and can be started by hand (`workflow_dispatch`). **Once M8 is deployed**,
+the host fetches that asset every 15 minutes, so the event is live on the page about 15 minutes after
+the merge, with no rebuild or restart (docs/plan.md §4). Until then, the event is published to the
+release but not served: the page only shows the empty fallback in `public/events/events.json`.
 
-The event is live about 15 minutes after the merge, with no rebuild or restart: CI publishes a new
-`events.json`, and the host fetches it (docs/plan.md §4). Past events disappear by themselves.
+Past events disappear by themselves: the page drops an event once its `end` has passed (the end of
+that day in Europe/Berlin for a date). The section shows five events per page, and stays hidden when
+there is none. To remove an event earlier, delete its file in a pull request.
 
 ### Bump the Scorpion release
 

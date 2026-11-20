@@ -50,8 +50,17 @@ Before you open a pull request, run the checks that CI runs:
 ```sh
 pnpm format:check
 pnpm lint          # ESLint
+pnpm events:check  # validates events/*.yaml against events/events.schema.json
+pnpm test          # unit tests of the events feed (node --test)
 pnpm check         # message key parity (EN/DE), then astro check: types, message keys, data files
 ```
+
+`pnpm events:build` validates the events and writes the feed, without past events, to the
+git-ignored `.cache/events/events.json` (`--out <file>` for another path, `--now <date-time>` to
+build it for another moment). The page reads `/events/events.json` at runtime; locally that is the
+empty fallback in `public/events/`, so the Upcoming events section stays hidden. To see it, copy a
+built feed there for a moment (don't commit it). How to add an event:
+[CONTRIBUTING.md](CONTRIBUTING.md#add-an-event).
 
 The English and German texts are in [messages/](messages/) (see [CONTRIBUTING.md](CONTRIBUTING.md)).
 The page follows the system colour scheme (`prefers-color-scheme`); to see the dark theme, switch
