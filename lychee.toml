@@ -1,0 +1,28 @@
+# lychee link checker (docs/plan.md §8). lychee reads this file from the repository root.
+#
+# - `pnpm check:links` (ci.yml, offline): the internal links and fragments in dist/, after
+#   `pnpm build`. Offline skips every network URL.
+# - `pnpm check:links:online` (links.yml, daily and on PRs touching src/data/): the URLs in
+#   src/data/*.yaml, which hold every external link on the page, the IPK imprint and privacy
+#   policy included.
+#
+# Every failure fails the run. The instance links (/denbi/, /nfdi/, /denbi/docs) and the demo are
+# hard failures: never exclude them or accept an error status for them. A host that blocks bots or
+# rate-limits gets a narrow, commented entry below (a remap, an exclude for that host, or a host
+# setting), never a blanket ignore and never `accept` for every host.
+
+max_retries = 3
+retry_wait_time = 5
+timeout = 30
+max_concurrency = 8
+
+# ror.org (the organisations' ROR ids in funders.yaml) answers every request without a browser
+# with 429 (Vercel bot protection, checked 2026-11-20 with lychee and curl). The ROR API answers
+# 200 for an existing id and 404 for an unknown one, so the remap still checks that each id exists.
+remap = ["^https://ror\\.org/(0[a-z0-9]{8})$ https://api.ror.org/v2/organizations/$1"]
+
+# No excluded hosts yet. Add one per host, with the date and the status it returned, for example:
+# exclude = [
+#   # example.org answers 403 to non-browser clients (checked YYYY-MM-DD).
+#   "^https://example\\.org/",
+# ]

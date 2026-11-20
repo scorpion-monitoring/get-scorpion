@@ -42,8 +42,8 @@ feature screenshots into the git-ignored `src/assets/generated/`; the zip is cac
 `node_modules/.cache/get-scorpion/`, so later builds work offline. The badges are downloaded on every
 build; without them the page shows text links. `pnpm check` needs no network.
 
-To move to a newer Scorpion release, run `pnpm bump-release` (see
-[CONTRIBUTING.md](CONTRIBUTING.md#bump-the-scorpion-release)).
+A weekly workflow opens a pull request when there is a newer Scorpion release; to bump by hand, run
+`pnpm bump-release` (see [CONTRIBUTING.md](CONTRIBUTING.md#bump-the-scorpion-release)).
 
 Before you open a pull request, run the checks that CI runs:
 
@@ -54,6 +54,18 @@ pnpm events:check  # validates events/*.yaml against events/events.schema.json a
 pnpm test          # unit tests (node --test): events feed and events.jsonld (Bioschemas), structured data, Open Graph images
 pnpm check         # message key parity (EN/DE), then astro check: types, message keys, data files
 ```
+
+After `pnpm build`, CI also checks the built site (how to install Chromium and lychee, and how to
+read a failure: [CONTRIBUTING.md](CONTRIBUTING.md#run-the-quality-checks-locally)):
+
+```sh
+pnpm check:html    # html-validate on dist/
+pnpm check:links   # lychee offline: internal links and fragments in dist/
+pnpm check:browser # Playwright + axe-core: / and /de/, light and dark, 375 and 1280 px
+```
+
+Scheduled workflows also run `pnpm check:links:online` (the external links in `src/data/`, daily)
+and `pnpm check:theme-drift` (the themes against the application's latest release, weekly).
 
 `pnpm build` ends with `scripts/check-dist.mjs`, which checks the built pages: no inline styles, no
 inline script apart from the one JSON-LD block, canonical and Open Graph URLs, the Bioschemas markup
@@ -86,8 +98,8 @@ _Filled in with M8 (container and deployment)._
 
 ## Contributing, security and licence
 
-- [CONTRIBUTING.md](CONTRIBUTING.md): workflow, adding an event, registering the TeSS source,
-  changing a logo.
+- [CONTRIBUTING.md](CONTRIBUTING.md): workflow, the quality checks, adding an event, registering
+  the TeSS source, link check failures, the bump pull request and theme drift, changing a logo.
 - [SECURITY.md](SECURITY.md): how to report a vulnerability.
 - Code: [ISC](LICENSE). Logos and screenshots are **not** covered by the ISC licence; see
   [ASSETS.md](ASSETS.md).

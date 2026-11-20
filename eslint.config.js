@@ -15,4 +15,9 @@ export default defineConfig(
     files: ['*.{js,mjs,ts}', 'scripts/**/*.{js,mjs,ts}'],
     languageOptions: { globals: globals.node },
   },
+  {
+    // Its page.evaluate() callbacks run in the browser (docs/plan.md §8).
+    files: ['scripts/check-browser.mjs'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+  },
 );

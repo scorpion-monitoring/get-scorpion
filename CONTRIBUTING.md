@@ -11,15 +11,48 @@ about the application itself belong in the
 2. Run `pnpm install`, then `pnpm format`, `pnpm lint` and `pnpm check` before you commit. Node.js comes from [.nvmrc](.nvmrc), pnpm
    from `packageManager` in [package.json](package.json).
 3. Open a pull request against `main`. CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) has to
-   be green: formatting, `actionlint` and `zizmor` for the workflows, and the `build` job (ESLint,
-   `pnpm events:check`, the unit tests, `astro check` and the build, which downloads the pinned docs
-   export), which later milestones extend.
+   be green: formatting, `actionlint` and `zizmor` for the workflows, the `build` job (ESLint,
+   `pnpm events:check`, the unit tests, `astro check`, the build, which downloads the pinned docs
+   export, then html-validate and the offline link check on `dist/`) and the `browser` job
+   (accessibility and the other browser checks). See
+   [Run the quality checks locally](#run-the-quality-checks-locally).
 4. Pull requests are squash-merged, and the branch is deleted after the merge. `main` takes no direct
    pushes and keeps a linear history.
 
 Changes to workflows must follow the rules in [docs/plan.md](docs/plan.md) §8: `permissions:
-contents: read` at the top level, every action pinned to a full commit SHA with a `# vX.Y.Z` comment,
-`persist-credentials: false` on checkout, and no `pull_request_target`.
+contents: read` at the top level, every action pinned to a full commit SHA with a `# vX.Y.Z` comment
+(and at least 7 days old), tool binaries pinned by version and sha256, `persist-credentials: false`
+on checkout, `timeout-minutes` and `concurrency` everywhere, and no `pull_request_target`.
+
+## Run the quality checks locally
+
+Each check is a `pnpm` script, and CI runs the same command. All but the theme check need a built
+site, so run `pnpm build` first.
+
+- `pnpm check:html`: [html-validate](https://html-validate.org/) on every page in `dist/`, with the
+  rules in [.htmlvalidate.mjs](.htmlvalidate.mjs). The only allowed findings are listed, each with
+  its reason, in [scripts/check-html.mjs](scripts/check-html.mjs); one that no longer occurs fails
+  too, so remove it then.
+- `pnpm check:browser`: Playwright and axe-core in Chromium
+  ([scripts/check-browser.mjs](scripts/check-browser.mjs)). Install the browser once with
+  `pnpm exec playwright-core install --with-deps --only-shell chromium` (`--with-deps` installs the
+  system packages and asks for sudo; leave it out if you have them). The script serves `dist/` with
+  the page's CSP and checks `/` and `/de/` in the light and the dark theme at 375 and 1280 px, with
+  the empty events feed and with one built from `scripts/fixtures/events/`: the WCAG 2.2 A and AA
+  rules of axe, one `h1`, the skip link, no horizontal scrolling, the mobile menu, no request to
+  another origin, no console error or CSP violation, and the events section. A failure lists every
+  problem of that run, for example `axe color-contrast (serious): … 1 element(s): .hero p`. "axe
+  needs review" lines are elements axe can't decide (docs/plan.md §6); they don't fail the run, but
+  check them by hand when they change.
+- `pnpm check:links`: [lychee](https://lychee.cli.rs/) **offline** on `dist/`: internal links and
+  `#fragments` only. Install lychee from your package manager or its
+  [releases](https://github.com/lycheeverse/lychee/releases) (CI uses the version in
+  [ci.yml](.github/workflows/ci.yml)).
+- `pnpm check:links:online`: lychee on the external links in `src/data/*.yaml`, as the
+  [Links workflow](.github/workflows/links.yml) does daily. Needs network; see
+  [Link check failures](#link-check-failures).
+- `pnpm check:theme-drift`: compares the daisyUI themes with the application's latest release (see
+  [Theme drift](#theme-drift)). Needs network.
 
 ## Texts and translations
 
@@ -140,20 +173,95 @@ fine too; it doesn't depend on the host timer.
 ### Bump the Scorpion release
 
 `scorpion-release.json` pins the application release whose `docs-export.zip` the build uses: the
-version line in the hero and the footer, and the feature screenshots (docs/plan.md §3). It does not
-follow new releases by itself; until a scheduled workflow does this (planned for M7), bump it by hand
-about once a week:
+version line in the hero and the footer, and the feature screenshots (docs/plan.md §3). Every Monday,
+job `bump` of [.github/workflows/upstream.yml](.github/workflows/upstream.yml) runs
+`pnpm bump-release`, and if there is a newer release, opens a pull request
+`deps: bump the Scorpion release to vX.Y.Z` from the branch `bot/scorpion-release`, or updates the
+one that is open. CI runs on it like on any other pull request. To review it:
+
+1. Check out the branch, run `pnpm build` and look at the page in both themes: the screenshots may
+   have changed. If a mapped screenshot was renamed or removed upstream, CI's build fails and names
+   it; pick a new one (next how-to) and push the fix to the same branch.
+2. Merge it when CI is green. If you leave it open, the next run adds a commit for the next release
+   on top. If you close it without merging, the next run starts again from `main`.
+
+To bump by hand (or between runs; the workflow also has a "Run workflow" button):
 
 1. Run `pnpm bump-release` (or `pnpm bump-release v0.17.0` for a specific tag). It downloads the
    zip of the latest release, checks it like the build does, and writes the new `tag` and `sha256`.
-2. Run `pnpm build` and look at the page in both themes: the screenshots may have changed. If a
-   mapped screenshot was renamed or removed upstream, the build fails and names it; pick a new one
-   (next how-to).
+2. Run `pnpm build` and look at the page in both themes, as above.
 3. Open a pull request with `scorpion-release.json` (and `src/data/screenshots.yaml` if changed).
 
 GitHub reports no digest for the asset, so the hash comes from the bump download. A build whose
 download doesn't match the pinned hash fails; never "fix" that by editing the hash without finding
 out why the asset changed.
+
+### Link check failures
+
+lychee prints one line per broken link, grouped by the file it is in, for example:
+
+```text
+[src/data/links.yaml]:
+[404] https://www.ipk-gatersleben.de/en/imprint (at 42:9) | Rejected status code: 404 Not Found
+[TIMEOUT] https://test.scorpion.bi.denbi.de/ (at 21:8) | Timeout
+```
+
+The first field is the HTTP status or the error (`TIMEOUT`, `ERROR` for DNS or TLS), then the URL,
+the line and column in the file, and lychee's reason. In CI it is in the job log and the run's
+summary. A scheduled failure of the [Links workflow](.github/workflows/links.yml) opens the issue
+"Scheduled link check failed", or comments on it if it is open; close it once the run is green
+again.
+
+- **An instance link or the demo** (`/denbi/`, `/nfdi/`, `/denbi/docs`,
+  `https://test.scorpion.bi.denbi.de/`) is down: that is the point of the check. Tell the operators;
+  don't exclude the link.
+- **A page moved** (404, or a redirect to a different page): update the URL in `src/data/`.
+- **One failure that is fine on the next run** (a timeout, a 5xx): rerun the workflow
+  ("Re-run jobs"). If it keeps happening for one host, look at it before you change anything.
+- **A host blocks bots or rate-limits** (403 or 429 in CI, but the page opens in a browser): add a
+  narrow, commented entry for that host to [lychee.toml](lychee.toml), with the date and the status
+  it returned. ror.org is handled that way (its ids are checked through the ROR API). Never accept
+  an error status for every host.
+- **The offline check** (`pnpm check:links` in CI's `build` job) reports a missing file or
+  `Cannot find fragment`: an internal link or an `id` changed; fix the link in the component.
+
+### Theme drift
+
+The page's two daisyUI themes in `src/styles/app.css` are copied from the application repo
+(docs/plan.md §6). Every Monday, job `theme-drift` of
+[.github/workflows/upstream.yml](.github/workflows/upstream.yml) compares them with
+`apps/web/src/app.css` at the application's latest release. When they differ, it opens the issue
+"Theme drift from the application repo" (or comments on the open one) with a table of every token
+that changed. To resolve it:
+
+1. Copy the theme list and both `@plugin 'daisyui/theme'` blocks from the release named in the
+   issue into `src/styles/app.css`, verbatim, and update the commit in the header comment.
+2. Run `pnpm check:theme-drift` (it should pass now), `pnpm build` and `pnpm check:browser`: the
+   contrast checks run in both themes. Look at the page in both themes too.
+3. Open a pull request, and close the issue when it is merged.
+
+If the application changed a theme on purpose and the page should not follow, say so in the issue
+and close it; it is reopened (as a new issue) on the next run while the difference remains, so a
+lasting decision belongs in docs/plan.md §6.
+
+### The upstream bot (maintainers)
+
+The bump pull request is opened with a GitHub App token, because a pull request opened with the
+workflow's own `GITHUB_TOKEN` doesn't start CI (docs/plan.md §3). Set it up once:
+
+1. Create a GitHub App in the `scorpion-monitoring` organisation (Settings → Developer settings →
+   GitHub Apps), for example "get-scorpion upstream bot": no webhook, no callback URL, repository
+   permissions **Contents: Read and write** and **Pull requests: Read and write** (Metadata: read is
+   added by itself), nothing else, installable only on this account.
+2. Install it on **only** the `get-scorpion` repository.
+3. Note its **Client ID** and generate a **private key**. Add both as repository secrets
+   (Settings → Secrets and variables → Actions): `RELEASE_BUMP_APP_CLIENT_ID` and
+   `RELEASE_BUMP_APP_PRIVATE_KEY` (the whole `.pem` file).
+4. Run the Upstream workflow by hand ("Run workflow") and check that job `bump` either finds nothing
+   to do or opens the pull request, and that CI starts on it.
+
+The workflow asks for a token with only those two permissions, for this repository only. To rotate
+the key, generate a new one, replace the secret and delete the old key in the App's settings.
 
 ### Change a feature card's screenshot
 
