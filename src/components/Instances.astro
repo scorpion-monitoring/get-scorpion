@@ -1,0 +1,36 @@
+---
+// Available instances (docs/plan.md §2, section 5), from src/data/instances.yaml.
+import { getInstances } from '../lib/data';
+import { t } from '../lib/i18n';
+import { m } from '../paraglide/messages.js';
+import type { Locale } from '../paraglide/runtime.js';
+import Logo from './Logo.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const options = { locale };
+const instances = await getInstances();
+---
+
+<section aria-labelledby="instances-title" class="py-12">
+  <h2 id="instances-title" class="text-3xl font-bold">
+    {m.instances_title({}, options)}
+  </h2>
+  <ul class="mt-8 grid gap-6 md:grid-cols-2">
+    {instances.map((instance) => (
+      <li class="flex flex-col items-start gap-4 rounded-box border border-base-300 bg-base-200 p-6">
+        <Logo {...instance.logo} alt={t(instance.logo.alt, locale)} name={instance.name} />
+        <h3 class="text-xl font-semibold">{instance.name}</h3>
+        <p class="grow">{t(instance.description, locale)}</p>
+        {/* The visible text is short; the accessible name also names the instance. */}
+        <a href={instance.url} class="btn btn-primary">
+          {m.instance_visit({}, options)}
+          <span class="sr-only"> {instance.name}</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</section>

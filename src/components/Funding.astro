@@ -1,0 +1,36 @@
+---
+// Funding and support (docs/plan.md §2, section 7), from src/data/funders.yaml.
+import { getFunders } from '../lib/data';
+import { t } from '../lib/i18n';
+import { m } from '../paraglide/messages.js';
+import type { Locale } from '../paraglide/runtime.js';
+import Logo from './Logo.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const options = { locale };
+const funders = await getFunders();
+---
+
+<section aria-labelledby="funding-title" class="py-12">
+  <h2 id="funding-title" class="text-3xl font-bold">
+    {m.funding_title({}, options)}
+  </h2>
+  <ul class="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+    {funders.map((funder) => (
+      <li class="flex flex-col items-start gap-3">
+        <p class="text-sm font-semibold tracking-wide uppercase">{t(funder.role, locale)}</p>
+        <Logo {...funder.logo} alt={t(funder.logo.alt, locale)} name={funder.name} />
+        <a
+          href={funder.url}
+          class="inline-flex min-h-6 items-center underline underline-offset-4 hover:decoration-2"
+        >
+          {funder.name}
+        </a>
+      </li>
+    ))}
+  </ul>
+</section>

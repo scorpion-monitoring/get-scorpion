@@ -1,0 +1,59 @@
+---
+// Get started (docs/plan.md §2, section 3): user docs, API reference and the demo instance.
+import { getLink } from '../lib/data';
+import { m } from '../paraglide/messages.js';
+import type { Locale } from '../paraglide/runtime.js';
+import Icon from './Icon.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const options = { locale };
+
+const cards = [
+  {
+    link: await getLink('docs'),
+    icon: 'book-open',
+    title: m.get_started_docs_title({}, options),
+    text: m.get_started_docs_text({}, options),
+    action: m.get_started_docs_link({}, options),
+  },
+  {
+    link: await getLink('api_reference'),
+    icon: 'file-code',
+    title: m.get_started_api_title({}, options),
+    text: m.get_started_api_text({}, options),
+    action: m.get_started_api_link({}, options),
+  },
+  {
+    link: await getLink('demo'),
+    icon: 'monitor-play',
+    title: m.get_started_demo_title({}, options),
+    text: m.get_started_demo_text({}, options),
+    action: m.get_started_demo_link({}, options),
+  },
+] as const;
+---
+
+<section aria-labelledby="get-started-title" class="py-12">
+  <h2 id="get-started-title" class="text-3xl font-bold">
+    {m.get_started_title({}, options)}
+  </h2>
+  <ul class="mt-8 grid gap-6 md:grid-cols-3">
+    {cards.map((card) => (
+      <li class="flex flex-col rounded-box border border-base-300 bg-base-200 p-6">
+        <Icon name={card.icon} size={28} class="text-primary" />
+        <h3 class="mt-4 text-xl font-semibold">{card.title}</h3>
+        <p class="mt-2 grow">{card.text}</p>
+        <a
+          href={card.link.url}
+          class="mt-4 self-start py-0.5 font-semibold text-primary underline underline-offset-4 hover:decoration-2"
+        >
+          {card.action}
+        </a>
+      </li>
+    ))}
+  </ul>
+</section>

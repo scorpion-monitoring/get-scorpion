@@ -1,8 +1,13 @@
 ---
-// The page shell. The sections from milestone 3 go into <main>. Canonical URL, meta description and
-// Open Graph tags come with milestone 6 (docs/plan.md §7).
+// The page shell with the sections in the order of docs/plan.md §2. Canonical URL, meta description
+// and Open Graph tags come with milestone 6 (docs/plan.md §7).
 import { getAbsoluteLocaleUrl } from 'astro:i18n';
-import LangSwitch from '../components/LangSwitch.astro';
+import Footer from '../components/Footer.astro';
+import Funding from '../components/Funding.astro';
+import GetStarted from '../components/GetStarted.astro';
+import Hero from '../components/Hero.astro';
+import Instances from '../components/Instances.astro';
+import Nav from '../components/Nav.astro';
 import { m } from '../paraglide/messages.js';
 import { baseLocale, locales, type Locale } from '../paraglide/runtime.js';
 import '../styles/app.css';
@@ -33,12 +38,15 @@ const options = { locale };
     >
       {m.skip_to_content({}, options)}
     </a>
-    <header class="mx-auto flex max-w-5xl justify-end px-4 py-3">
-      <LangSwitch locale={locale} />
-    </header>
-    <main id="main" tabindex="-1" class="mx-auto max-w-5xl px-4 py-12">
-      <h1 class="text-4xl font-bold">{m.hero_title({}, options)}</h1>
-      <slot />
+    <Nav locale={locale} />
+    <main id="main" tabindex="-1" class="mx-auto max-w-5xl px-4">
+      <Hero locale={locale} />
+      <GetStarted locale={locale} />
+      {/* M5: Upcoming events (docs/plan.md §2, section 4; §4). */}
+      <Instances locale={locale} />
+      {/* M4: Features (docs/plan.md §2, section 6). */}
+      <Funding locale={locale} />
     </main>
+    <Footer locale={locale} />
   </body>
 </html>

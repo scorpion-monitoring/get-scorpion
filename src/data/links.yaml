@@ -1,0 +1,26 @@
+# Links used in the nav, Get started and the footer (docs/plan.md §2). Schema: src/content.config.ts.
+# `label` is a message key in messages/{en,de}.json; the link text itself lives there.
+
+releases:
+  url: https://github.com/scorpion-monitoring/scorpion/releases
+  label: link_get_scorpion
+# User documentation (docs/plan.md §12.2): the knowledge base.
+docs:
+  url: https://scorpion-monitoring.github.io/knowledgebase/
+  label: link_docs
+# OpenAPI reference of the de.NBI / ELIXIR-DE instance. The catalogue (/denbi/catalog/services) is
+# not linked until the instances run the release that has it (§12.3).
+api_reference:
+  url: https://scorpion.bi.denbi.de/denbi/docs
+  label: link_api_reference
+demo:
+  url: https://test.scorpion.bi.denbi.de/
+  label: link_demo
+# GitHub Discussions is off on the application repo, so contact goes to the new-issue chooser (§12.4).
+contact:
+  url: https://github.com/scorpion-monitoring/scorpion/issues/new/choose
+  label: link_contact
+# The application repo, not this one (§2).
+github:
+  url: https://github.com/scorpion-monitoring/scorpion
+  label: link_github

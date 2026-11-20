@@ -23,8 +23,11 @@ contents: read` at the top level, every action pinned to a full commit SHA with 
 ## Texts and translations
 
 All visible text lives in [messages/](messages/): `messages/en.json` for English and
-`messages/de.json` for German. Both files must have the **same keys**. A key that is missing in
-`de.json` falls back to English without an error, so check both files when you add or rename one.
+`messages/de.json` for German. Both files must have the **same keys**. Paraglide itself would fall
+back to English for a key missing in `de.json` without an error, so `pnpm check` first runs
+[scripts/check-messages.mjs](scripts/check-messages.mjs), which fails when the key sets differ. The
+data files in `src/data/` hold message keys rather than text (apart from organisation names); an
+unknown key there fails `pnpm check`.
 Message keys use `snake_case`, and a placeholder looks like `{name}`.
 
 [Paraglide JS](https://paraglidejs.com) compiles the files into typed functions in `src/paraglide/`
@@ -49,14 +52,17 @@ The event is live about 15 minutes after the merge, with no rebuild or restart: 
 
 ### Change a funder or instance logo
 
-_Available from M3 (static sections)._
+Until a logo is added, the page shows a placeholder: the organisation name in a dashed box, at the
+logo's size and with its alt text.
 
 1. Get written permission or check the organisation's published brand policy. Record the source URL,
    the terms and the date in [ASSETS.md](ASSETS.md). Logos without a recorded permission are not
    merged.
 2. Add the logo as SVG to `src/assets/logos/`, plus a dark variant if the logo fails contrast on a dark
    background.
-3. Update `src/data/funders.yaml` or `src/data/instances.yaml`, including meaningful alt text (for
-   example "de.NBI / ELIXIR-DE logo").
+3. In `src/data/funders.yaml` or `src/data/instances.yaml`, set `logo.src` (and `logo.dark`) to the
+   file, relative to the YAML file, for example `src: ../assets/logos/dfg.svg`. `logo.width` and
+   `logo.height` are the box the logo is fitted into. The alt text is the message named by
+   `logo.alt` (for example "de.NBI / ELIXIR-DE logo") in both message files.
 4. Check the page in the light and the dark theme (`prefers-color-scheme`); the logo must stay
    legible in both.

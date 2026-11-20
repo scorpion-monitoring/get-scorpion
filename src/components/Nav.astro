@@ -1,0 +1,81 @@
+---
+// Site header with the main navigation and the language switcher (docs/plan.md §2, section 1).
+// On narrow screens the main links collapse into a <details> menu, which needs no JavaScript
+// (§6). The two lists hold the same links; only one of them is displayed at any width.
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { getLink } from '../lib/data';
+import { t } from '../lib/i18n';
+import { m } from '../paraglide/messages.js';
+import type { Locale } from '../paraglide/runtime.js';
+import GitHubMark from './GitHubMark.astro';
+import Icon from './Icon.astro';
+import LangSwitch from './LangSwitch.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const options = { locale };
+
+const textLinks = await Promise.all(
+  ['releases', 'docs', 'contact'].map(async (id) => {
+    const link = await getLink(id);
+    return { url: link.url, text: t(link.label, locale) };
+  }),
+);
+const github = await getLink('github');
+
+const linkClass =
+  'inline-flex min-h-11 items-center gap-2 rounded-field px-3 py-2 underline-offset-4 hover:underline';
+---
+
+<header class="border-b border-base-300">
+  <div class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2">
+    <a
+      href={getRelativeLocaleUrl(locale)}
+      class:list={[linkClass, '-ml-3 mr-auto text-lg font-bold']}
+    >
+      Scorpion
+    </a>
+    <nav aria-label={m.nav_label({}, options)} class="flex items-center">
+      <ul class="hidden items-center gap-1 md:flex">
+        {textLinks.map((link) => (
+          <li>
+            <a href={link.url} class={linkClass}>
+              {link.text}
+            </a>
+          </li>
+        ))}
+        <li>
+          <a href={github.url} class:list={[linkClass, 'min-w-11 justify-center']}>
+            <GitHubMark size={22} />
+            <span class="sr-only">{m.nav_github({}, options)}</span>
+          </a>
+        </li>
+      </ul>
+      <details class="relative md:hidden">
+        <summary class="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-field px-3 py-2 hover:bg-base-200 [&::-webkit-details-marker]:hidden">
+          <Icon name="menu" />
+          {m.nav_menu({}, options)}
+        </summary>
+        <ul class="absolute right-0 top-full z-20 mt-1 flex w-60 flex-col rounded-box border border-base-300 bg-base-100 p-2 shadow-lg">
+          {textLinks.map((link) => (
+            <li>
+              <a href={link.url} class:list={[linkClass, 'w-full']}>
+                {link.text}
+              </a>
+            </li>
+          ))}
+          <li>
+            <a href={github.url} class:list={[linkClass, 'w-full']}>
+              <GitHubMark />
+              {m.nav_github({}, options)}
+            </a>
+          </li>
+        </ul>
+      </details>
+    </nav>
+    <LangSwitch locale={locale} />
+  </div>
+</header>

@@ -40,7 +40,7 @@ Before you open a pull request, run the checks that CI runs:
 ```sh
 pnpm format:check
 pnpm lint          # ESLint
-pnpm check         # astro check: types, including the message keys
+pnpm check         # message key parity (EN/DE), then astro check: types, message keys, data files
 ```
 
 The English and German texts are in [messages/](messages/) (see [CONTRIBUTING.md](CONTRIBUTING.md)).
