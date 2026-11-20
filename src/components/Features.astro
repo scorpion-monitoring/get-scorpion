@@ -4,6 +4,10 @@
 // export as a light/dark pair; the others show a Lucide icon. The "Security assurance" card shows
 // the OpenSSF badges of the application repo, downloaded at build time and served from our own
 // origin, or a text link where a download failed (§12.10).
+//
+// Layout: two columns from `md`. Screenshot cards come first and icon cards after them, each group in
+// the order of `cards`, so cards of the same kind sit side by side. If a group has an odd number of
+// cards, its last card spans both columns; a wide screenshot card puts its image beside the text.
 import { getCollection } from 'astro:content';
 import { getLink } from '../lib/data';
 import { getBadges, getScreenshot } from '../lib/generated';
@@ -48,16 +52,16 @@ const cards: { id: string; title: string; text: string; icon: IconName }[] = [
     text: m.feature_analytics_text({}, options),
   },
   {
-    id: 'impact',
-    icon: 'chart-pie',
-    title: m.feature_impact_title({}, options),
-    text: m.feature_impact_text({}, options),
-  },
-  {
     id: 'catalogue',
     icon: 'book-open',
     title: m.feature_catalogue_title({}, options),
     text: m.feature_catalogue_text({}, options),
+  },
+  {
+    id: 'impact',
+    icon: 'chart-pie',
+    title: m.feature_impact_title({}, options),
+    text: m.feature_impact_text({}, options),
   },
   {
     id: 'api',
@@ -86,6 +90,13 @@ for (const id of screenshots.keys()) {
     throw new Error(`src/data/screenshots.yaml: "${id}" is not a feature card id`);
   }
 }
+
+const withShot = cards.filter((card) => screenshots.has(card.id));
+const withIcon = cards.filter((card) => !screenshots.has(card.id));
+/** The last card of a group with an odd number of cards spans both columns. */
+const lastOfOdd = (group: typeof cards) => (group.length % 2 === 1 ? group.at(-1)?.id : undefined);
+const wide = new Set([lastOfOdd(withShot), lastOfOdd(withIcon)]);
+const ordered = [...withShot, ...withIcon];
 
 const apiReference = await getLink('api_reference');
 const bestPracticesLink = await getLink('best_practices');
@@ -139,14 +150,18 @@ const textLink =
     {m.features_title({}, options)}
   </h2>
   <ul class="mt-8 grid gap-6 md:grid-cols-2">
-    {cards.map((card) => {
+    {ordered.map((card) => {
       const shot = screenshots.get(card.id);
       const images = shot && getScreenshot(shot.journey, shot.slug);
+      const isWide = wide.has(card.id);
       return (
         <li
           class:list={[
             'flex min-w-0 flex-col rounded-box border border-base-300 bg-base-200 p-6',
-            { 'md:col-span-2': card.id === 'security' },
+            {
+              'md:col-span-2': isWide,
+              'md:grid md:grid-cols-2 md:items-center md:gap-x-6': isWide && shot,
+            },
           ]}
         >
           {shot && images ? (
@@ -156,48 +171,53 @@ const textLink =
               alt={t(shot.alt, locale)}
               width={640}
               height={400}
-              class="mb-4 block overflow-hidden rounded-box border border-base-300"
+              class:list={[
+                'mb-4 block overflow-hidden rounded-box border border-base-300',
+                { 'md:mb-0': isWide },
+              ]}
               imgClass="block h-auto w-full"
             />
           ) : (
             <Icon name={card.icon} size={28} class="text-primary" />
           )}
-          <h3 class:list={['text-xl font-semibold', { 'mt-4': !shot }]}>{card.title}</h3>
-          <p class="mt-2">{card.text}</p>
-          {card.id === 'api' && (
-            <a href={apiReference.url} class:list={['mt-4', textLink]}>
-              {m.feature_api_link({}, options)}
-            </a>
-          )}
-          {card.id === 'security' && (
-            <>
-              {anyBadge && (
-                <p class="mt-4">{m.feature_security_badges({ date: badgeDate }, options)}</p>
-              )}
-              <ul class="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2">
-                {badgeLinks.map((badge) => (
-                  <li>
-                    {badge.image && badge.alt ? (
-                      <a href={badge.link.url} class="inline-flex min-h-6 items-center py-0.5">
-                        <ThemedPicture
-                          src={badge.image}
-                          alt={badge.alt}
-                          width={badge.image.width}
-                          height={badge.image.height}
-                          class="block"
-                          imgClass="block"
-                        />
-                      </a>
-                    ) : (
-                      <a href={badge.link.url} class={textLink}>
-                        {t(badge.link.label, locale)}
-                      </a>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
+          <div class="flex grow flex-col">
+            <h3 class:list={['text-xl font-semibold', { 'mt-4': !shot }]}>{card.title}</h3>
+            <p class="mt-2">{card.text}</p>
+            {card.id === 'api' && (
+              <a href={apiReference.url} class:list={['mt-4', textLink]}>
+                {m.feature_api_link({}, options)}
+              </a>
+            )}
+            {card.id === 'security' && (
+              <>
+                {anyBadge && (
+                  <p class="mt-4">{m.feature_security_badges({ date: badgeDate }, options)}</p>
+                )}
+                <ul class="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2">
+                  {badgeLinks.map((badge) => (
+                    <li>
+                      {badge.image && badge.alt ? (
+                        <a href={badge.link.url} class="inline-flex min-h-6 items-center py-0.5">
+                          <ThemedPicture
+                            src={badge.image}
+                            alt={badge.alt}
+                            width={badge.image.width}
+                            height={badge.image.height}
+                            class="block"
+                            imgClass="block"
+                          />
+                        </a>
+                      ) : (
+                        <a href={badge.link.url} class={textLink}>
+                          {t(badge.link.label, locale)}
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
         </li>
       );
     })}

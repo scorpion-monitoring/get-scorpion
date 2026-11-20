@@ -69,13 +69,13 @@ structured data lives in `src/data/*.yaml`, validated by a Zod schema through As
 2. KPI framework aligned with RIMO: indicators with value types and units; KPI sets per service. Screenshot `j09/form-with-problem`.
 3. Measurement submission: in the web UI (form or CSV/XLSX file) or through the API; one validated value per service, indicator and month. Screenshot `j10/file-preview`.
 4. Analytics and dashboards: month-by-month values, change, average and volatility; exports. Screenshot `j12/cards`.
-5. Impact assessment: consortium-level figures (services per stage, open-source share, yearly headline KPIs). Icon: no screenshot shows these figures.
-6. Public catalogue: searchable published services; schema.org and RIMO exports (Turtle, JSON-LD). Screenshot `j08/facet-counts` (the signed-in service list with facets; there is no screenshot of the anonymous catalogue).
+5. Public catalogue: searchable published services; schema.org and RIMO exports (Turtle, JSON-LD). Screenshot `j08/facet-counts` (the signed-in service list with facets; there is no screenshot of the anonymous catalogue). Shown full width, image beside the text, since it is the odd one of five screenshot cards.
+6. Impact assessment: consortium-level figures (services per stage, open-source share, yearly headline KPIs). Icon: no screenshot shows these figures.
 7. Public REST API v1: OpenAPI reference at `<instance>/docs`; personal access tokens. Links to the API reference.
 8. Sign-in, access and audit trail: institutional OpenID Connect or local accounts; role-based access; provider membership; notifications, inbox and audit trail.
 9. Security assurance: a self-assessment against OWASP ASVS 5.0 L2 for authentication, sessions, authorisation and OIDC, **in progress**. The OpenSSF Best Practices badge and Scorecard of the application repo are shown as images downloaded at build time and served from our own origin, with their date (see §6, §12.10). The page never says the level is reached.
 
-Cards with an entry in `src/data/screenshots.yaml` get that screenshot; the others get an icon (Lucide, ISC, inlined SVG). This **drops the
+Cards with an entry in `src/data/screenshots.yaml` get that screenshot; the others get an icon (Lucide, ISC, inlined SVG). On the page, screenshot cards come first and icon cards after them, in two columns from `md`, so cards of the same kind pair up; the last card of a group with an odd number of cards spans both columns (moved in M5, after the M4 review). This **drops the
 undraw illustrations**: real screenshots are accurate, and they come in light and dark versions.
 
 ## 3. Using the docs export
