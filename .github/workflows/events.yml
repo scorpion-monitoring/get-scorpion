@@ -1,0 +1,111 @@
+name: Events
+
+# Publishes events.json, built from events/*.yaml, as the asset of the rolling `events` release
+# (docs/plan.md §4, §8). The host fetches
+# https://github.com/scorpion-monitoring/get-scorpion/releases/download/events/events.json
+# (from M8); visitors' browsers only ever request /events/events.json on our own origin.
+on:
+  push:
+    branches: [main]
+    paths:
+      - events/**
+      - scripts/build-events.mjs
+      - src/lib/events.ts
+      - .github/workflows/events.yml
+  # Daily, to drop past events from the asset (decision of 2026-11-20, docs/plan.md §1). The page
+  # filters them anyway.
+  schedule:
+    - cron: '17 3 * * *'
+  # To republish by hand.
+  workflow_dispatch:
+
+# Least privilege (docs/plan.md §8). Only `publish` may write.
+permissions:
+  contents: read
+
+# Runs queue instead of cancelling each other, so the last one wins.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Reads the pnpm version from `packageManager` in package.json.
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      # No dependency cache in a workflow that publishes.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      # Validates every event file, drops past events, sorts, and validates the feed it writes.
+      - run: pnpm events:build --out "$RUNNER_TEMP/events/events.json"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: events-json
+          path: ${{ runner.temp }}/events/events.json
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: publish
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: events-json
+          path: ${{ runner.temp }}/events
+      # A pre-release, so it is never marked "Latest" and the "Get Scorpion" link (the application
+      # repo's releases) is unaffected. The tag is created on the current commit.
+      - name: Create the events release if missing
+        run: |
+          if ! gh release view events >/dev/null 2>&1; then
+            gh release create events \
+              --prerelease --latest=false --target "$GITHUB_SHA" \
+              --title "Events feed" \
+              --notes "Rolling release of the landing page's events feed (docs/plan.md §4). events.json is replaced by .github/workflows/events.yml; don't edit it by hand."
+          fi
+      - name: Upload events.json
+        run: gh release upload events "$RUNNER_TEMP/events/events.json" --clobber
+
+  verify:
+    name: verify
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: events-json
+          path: ${{ runner.temp }}/built
+      # The public URL the host fetches, without a token.
+      - name: Download and check the published asset
+        env:
+          ASSET_URL: https://github.com/${{ github.repository }}/releases/download/events/events.json
+        run: |
+          curl -fsSL --retry 5 --retry-all-errors --max-filesize 1000000 \
+            -o "$RUNNER_TEMP/published.json" "$ASSET_URL"
+          node scripts/build-events.mjs --check-feed "$RUNNER_TEMP/published.json"
+          cmp "$RUNNER_TEMP/built/events.json" "$RUNNER_TEMP/published.json"

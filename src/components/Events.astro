@@ -1,0 +1,69 @@
+---
+// Upcoming events (docs/plan.md §2, section 4; §4). The events are not in the HTML: the client
+// script src/scripts/events.ts fetches /events/events.json at runtime, so a new event needs no
+// rebuild. The section is `hidden` until the script has at least one upcoming event to show, so
+// without JavaScript, with an empty or broken feed, it never appears.
+//
+// Every visible string is rendered here from messages/ in the page locale; the script carries no
+// text. It fills a copy of the <template> per event, using textContent only, and replaces
+// `{page}` and `{pages}` in `data-page-status`. With more than PAGE_SIZE events (src/lib/events.ts)
+// the pager appears.
+import { m } from '../paraglide/messages.js';
+import type { Locale } from '../paraglide/runtime.js';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const options = { locale };
+---
+
+<section
+  id="events"
+  aria-labelledby="events-title"
+  class="py-12"
+  hidden
+  data-events
+  data-page-status={m.events_page_status({ page: '{page}', pages: '{pages}' }, options)}
+>
+  <h2 id="events-title" class="text-3xl font-bold">
+    {m.events_title({}, options)}
+  </h2>
+  <ul class="mt-8 grid gap-6" data-events-list></ul>
+  <nav
+    aria-label={m.events_pages({}, options)}
+    class="mt-6 flex flex-wrap items-center gap-4"
+    hidden
+    data-events-pager
+  >
+    <button type="button" class="btn btn-sm" data-events-previous>
+      {m.events_previous({}, options)}
+    </button>
+    <p aria-live="polite" data-events-status></p>
+    <button type="button" class="btn btn-sm" data-events-next>
+      {m.events_next({}, options)}
+    </button>
+  </nav>
+  <template data-events-item>
+    <li class="flex min-w-0 flex-col rounded-box border border-base-300 bg-base-200 p-6 wrap-anywhere">
+      <h3 class="text-xl font-semibold" data-field="title"></h3>
+      <dl class="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1">
+        <dt class="font-semibold">{m.events_when({}, options)}</dt>
+        <dd data-field="when"></dd>
+        <dt class="font-semibold">{m.events_where({}, options)}</dt>
+        <dd data-field="location"></dd>
+      </dl>
+      <p class="mt-2" data-field="summary"></p>
+      <a
+        class="mt-4 self-start py-0.5 font-semibold text-primary underline underline-offset-4 hover:decoration-2"
+        data-field="url"
+      >
+        {m.events_link({}, options)}
+        <span class="sr-only" data-field="link-title"></span>
+      </a>
+    </li>
+  </template>
+</section>
+
+<script src="../scripts/events.ts"></script>

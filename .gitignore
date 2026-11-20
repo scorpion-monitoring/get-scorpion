@@ -12,6 +12,9 @@ project.inlang/cache/
 # Fetched from the docs export at build time (docs/plan.md §3)
 src/assets/generated/
 
+# events.json written by `pnpm events:build` (docs/plan.md §4)
+.cache/
+
 # Logs
 npm-debug.log*
 pnpm-debug.log*

@@ -6,7 +6,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig(
-  globalIgnores(['dist/', '.astro/', 'src/paraglide/', 'project.inlang/cache/']),
+  globalIgnores(['dist/', '.astro/', '.cache/', 'src/paraglide/', 'project.inlang/cache/']),
   js.configs.recommended,
   tseslint.configs.strict,
   astro.configs.recommended,

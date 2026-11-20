@@ -32,8 +32,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
 
-  # Separate from `format` so that job stays fast. Later milestones add schema validation,
-  # html-validate, link checks and the browser tests here (docs/plan.md §8).
+  # Separate from `format` so that job stays fast. Later milestones add html-validate, link checks
+  # and the browser tests here (docs/plan.md §8).
   build:
     name: build
     runs-on: ubuntu-latest
@@ -50,6 +50,10 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      # events/*.yaml against events/events.schema.json and the rules the schema can't express.
+      - run: pnpm events:check
+      # Unit tests of the events feed (node --test).
+      - run: pnpm test
       # Also compiles the Paraglide messages, so a missing message key fails here.
       - run: pnpm check
       - run: pnpm build

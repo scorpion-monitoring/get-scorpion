@@ -1,0 +1,36 @@
+# Template for an event on the landing page (docs/plan.md §4). Copy this file to events/<id>.yaml,
+# fill in every field, and open a pull request; CI checks it against events/events.schema.json.
+# Files whose name starts with "_" are ignored. All fields are required, and no others are allowed.
+
+# Short, unique, lowercase letters, digits and single hyphens (at most 64 characters). Must equal
+# the file name without .yaml, for example denbi-plenary-2027 for events/denbi-plenary-2027.yaml.
+id: denbi-plenary-2027
+
+# start and end are either both dates (an all-day event, days in Europe/Berlin) ...
+start: 2027-03-10
+# ... the last day, inclusive. Equal to start for a one-day event.
+end: 2027-03-11
+# ... or both date-times with an offset, which the page shows in Europe/Berlin time:
+#   start: 2027-03-10T09:00:00+01:00
+#   end: 2027-03-10T17:30:00+01:00
+# end must not be before start. The event disappears from the page once its end has passed: after
+# the last day ends in Europe/Berlin, or after the end time.
+
+# The name of the event, at most 120 characters, in English and German.
+title:
+  en: de.NBI plenary meeting 2027
+  de: de.NBI-Plenartreffen 2027
+
+# One or two sentences on what the event is about and why Scorpion users may care, at most 400
+# characters, in English and German.
+summary:
+  en: The annual meeting of the de.NBI network, with a session on service monitoring with Scorpion.
+  de: Das jährliche Treffen des de.NBI-Netzwerks, mit einer Sitzung zum Service-Monitoring mit Scorpion.
+
+# Where the event takes place, the same in both languages (at most 120 characters), for example a
+# city, a city and venue, or "Online".
+location: Bielefeld
+
+# The event's own page, https:// only (at most 500 characters). The link text on the page is
+# "Event details".
+url: https://www.denbi.de/

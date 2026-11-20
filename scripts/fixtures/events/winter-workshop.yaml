@@ -1,0 +1,11 @@
+id: winter-workshop
+start: 2026-12-01
+end: 2026-12-01
+title:
+  en: Winter workshop
+  de: Winter-Workshop
+summary:
+  en: A one-day fixture event.
+  de: Eine eintägige Testveranstaltung.
+location: Online
+url: https://example.org/winter

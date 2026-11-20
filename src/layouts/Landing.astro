@@ -2,6 +2,7 @@
 // The page shell with the sections in the order of docs/plan.md §2. Canonical URL, meta description
 // and Open Graph tags come with milestone 6 (docs/plan.md §7).
 import { getAbsoluteLocaleUrl } from 'astro:i18n';
+import Events from '../components/Events.astro';
 import Features from '../components/Features.astro';
 import Footer from '../components/Footer.astro';
 import Funding from '../components/Funding.astro';
@@ -43,7 +44,7 @@ const options = { locale };
     <main id="main" tabindex="-1" class="mx-auto max-w-5xl px-4">
       <Hero locale={locale} />
       <GetStarted locale={locale} />
-      {/* M5: Upcoming events (docs/plan.md §2, section 4; §4). */}
+      <Events locale={locale} />
       <Instances locale={locale} />
       <Features locale={locale} />
       <Funding locale={locale} />

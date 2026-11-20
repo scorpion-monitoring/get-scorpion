@@ -1,0 +1,2 @@
+# Files starting with "_" are skipped, like events/_template.yaml.
+this: is not an event

@@ -1,0 +1,18 @@
+# 5th BioHackathon Germany, project "Towards an Integrated Service Management Stack for de.NBI".
+id: bhde26
+start: 2026-12-07
+end: 2026-12-11
+title:
+  en: Towards an Integrated Service Management Stack for de.NBI
+  de: Auf dem Weg zu einem integrierten Service-Management-Stack für de.NBI
+summary:
+  en: >-
+    A project at the 5th BioHackathon Germany that connects OSIRIS, Scorpion and the de.NBI Service
+    Registration Platform: automatic imports of service metadata and publications, Scorpion metrics
+    in OSIRIS, and simpler KPI submission for service providers.
+  de: >-
+    Ein Projekt beim 5. BioHackathon Germany, das OSIRIS, Scorpion und die Service Registration
+    Platform von de.NBI verbindet: automatischer Import von Service-Metadaten und Publikationen,
+    Scorpion-Kennzahlen in OSIRIS und eine einfachere KPI-Meldung für Service-Anbieter.
+location: Göttingen
+url: https://www.denbi.de/de-nbi-events/2142-5th-biohackathon-germany-towards-an-integrated-service-management-stack-for-de-nbi

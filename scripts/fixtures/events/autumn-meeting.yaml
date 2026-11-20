@@ -1,0 +1,11 @@
+id: autumn-meeting
+start: 2026-10-01
+end: 2026-10-02
+title:
+  en: Autumn meeting
+  de: Herbsttreffen
+summary:
+  en: A fixture event that is over.
+  de: Eine Testveranstaltung, die vorbei ist.
+location: Bielefeld
+url: https://example.org/autumn

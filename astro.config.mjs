@@ -17,6 +17,13 @@ export default defineConfig({
     inlineStylesheets: 'never',
   },
   vite: {
+    build: {
+      // Astro inlines a processed <script> that imports nothing and is smaller than this limit
+      // (astro/dist/core/build/plugins/plugin-scripts.js), which `script-src 'self'` would block.
+      // Never inline JavaScript, so the events script stays an external, hashed file; other
+      // assets keep Vite's default (undefined = 4 KB) (docs/plan.md §6).
+      assetsInlineLimit: (filePath) => (filePath.endsWith('.js') ? false : undefined),
+    },
     plugins: [
       tailwindcss(),
       // Compiles messages/*.json to typed message functions in src/paraglide/ at build time.
