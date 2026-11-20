@@ -106,4 +106,23 @@ const funders = defineCollection({
     }),
 });
 
-export const collections = { links, instances, funders };
+/**
+ * The screenshot of a feature card: a light/dark pair from the docs export of the release pinned in
+ * scorpion-release.json (docs/plan.md §3). The entry id is the feature card id. Whether the pair
+ * exists upstream is checked by scripts/fetch-docs-export.mjs, which fails the build otherwise.
+ */
+const screenshots = defineCollection({
+  loader: strictFile('src/data/screenshots.yaml'),
+  schema: z.strictObject({
+    /** Journey id in screenshots.json, for example `j07`. */
+    journey: z.string().regex(/^j\d{2}$/, { error: 'A journey id like j07' }),
+    /** Screenshot slug, unique only within its journey, for example `service-after-edit`. */
+    slug: z
+      .string()
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, { error: 'A slug like service-after-edit' }),
+    /** Message key of the alt text, which describes what the screenshot shows. */
+    alt: messageKey,
+  }),
+});
+
+export const collections = { links, instances, funders, screenshots };

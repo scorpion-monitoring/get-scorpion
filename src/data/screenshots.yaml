@@ -1,0 +1,26 @@
+# Screenshots of the feature cards (docs/plan.md §2, section 6; §3). Schema: src/content.config.ts.
+# Each key is a feature card id from src/components/Features.astro. `journey` and `slug` name a
+# light/dark pair in screenshots.json of the pinned docs export (scorpion-release.json); slugs are
+# only unique within a journey. `alt` is the message key of the alt text. The build fails when a
+# pair is missing upstream. Cards without an entry show an icon.
+
+registry:
+  journey: j07
+  slug: service-after-edit
+  alt: screenshot_alt_registry
+kpis:
+  journey: j09
+  slug: form-with-problem
+  alt: screenshot_alt_kpis
+submission:
+  journey: j10
+  slug: file-preview
+  alt: screenshot_alt_submission
+analytics:
+  journey: j12
+  slug: cards
+  alt: screenshot_alt_analytics
+catalogue:
+  journey: j08
+  slug: facet-counts
+  alt: screenshot_alt_catalogue

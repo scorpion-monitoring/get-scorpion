@@ -1,0 +1,205 @@
+---
+// Features (docs/plan.md §2, section 6): nine cards with hand-written text (decision of 2026-11-20,
+// §12.7). A card with an entry in src/data/screenshots.yaml shows that screenshot from the docs
+// export as a light/dark pair; the others show a Lucide icon. The "Security assurance" card shows
+// the OpenSSF badges of the application repo, downloaded at build time and served from our own
+// origin, or a text link where a download failed (§12.10).
+import { getCollection } from 'astro:content';
+import { getLink } from '../lib/data';
+import { getBadges, getScreenshot } from '../lib/generated';
+import { t } from '../lib/i18n';
+import { m } from '../paraglide/messages.js';
+import type { Locale } from '../paraglide/runtime.js';
+import Icon from './Icon.astro';
+import ThemedPicture from './ThemedPicture.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const options = { locale };
+
+type IconName = Parameters<typeof Icon>[0]['name'];
+
+const cards: { id: string; title: string; text: string; icon: IconName }[] = [
+  {
+    id: 'registry',
+    icon: 'book-open',
+    title: m.feature_registry_title({}, options),
+    text: m.feature_registry_text({}, options),
+  },
+  {
+    id: 'kpis',
+    icon: 'chart-pie',
+    title: m.feature_kpis_title({}, options),
+    text: m.feature_kpis_text({}, options),
+  },
+  {
+    id: 'submission',
+    icon: 'file-code',
+    title: m.feature_submission_title({}, options),
+    text: m.feature_submission_text({}, options),
+  },
+  {
+    id: 'analytics',
+    icon: 'chart-pie',
+    title: m.feature_analytics_title({}, options),
+    text: m.feature_analytics_text({}, options),
+  },
+  {
+    id: 'impact',
+    icon: 'chart-pie',
+    title: m.feature_impact_title({}, options),
+    text: m.feature_impact_text({}, options),
+  },
+  {
+    id: 'catalogue',
+    icon: 'book-open',
+    title: m.feature_catalogue_title({}, options),
+    text: m.feature_catalogue_text({}, options),
+  },
+  {
+    id: 'api',
+    icon: 'braces',
+    title: m.feature_api_title({}, options),
+    text: m.feature_api_text({}, options),
+  },
+  {
+    id: 'access',
+    icon: 'key-round',
+    title: m.feature_access_title({}, options),
+    text: m.feature_access_text({}, options),
+  },
+  {
+    id: 'security',
+    icon: 'shield-check',
+    title: m.feature_security_title({}, options),
+    text: m.feature_security_text({}, options),
+  },
+];
+
+// Every screenshot entry must belong to a card, so a typo in an id is not silently ignored.
+const screenshots = new Map((await getCollection('screenshots')).map((e) => [e.id, e.data]));
+for (const id of screenshots.keys()) {
+  if (!cards.some((card) => card.id === id)) {
+    throw new Error(`src/data/screenshots.yaml: "${id}" is not a feature card id`);
+  }
+}
+
+const apiReference = await getLink('api_reference');
+const bestPracticesLink = await getLink('best_practices');
+const scorecardLink = await getLink('scorecard');
+
+const badges = getBadges();
+const badgeDate = new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeZone: 'UTC' }).format(
+  new Date(`${badges.date}T00:00:00Z`),
+);
+
+function bestPracticesLevel(badge: NonNullable<typeof badges.bestPractices>) {
+  switch (badge.level) {
+    case 'passing':
+      return m.badge_level_passing({}, options);
+    case 'silver':
+      return m.badge_level_silver({}, options);
+    case 'gold':
+      return m.badge_level_gold({}, options);
+    case 'in_progress':
+      return m.badge_level_in_progress({ percent: String(badge.percent) }, options);
+  }
+}
+
+const badgeLinks = [
+  {
+    link: bestPracticesLink,
+    image: badges.bestPractices?.image,
+    alt:
+      badges.bestPractices &&
+      m.badge_best_practices_alt({ level: bestPracticesLevel(badges.bestPractices) }, options),
+  },
+  {
+    link: scorecardLink,
+    image: badges.scorecard?.image,
+    alt:
+      badges.scorecard &&
+      m.badge_scorecard_alt(
+        { score: new Intl.NumberFormat(locale).format(badges.scorecard.score) },
+        options,
+      ),
+  },
+];
+const anyBadge = badgeLinks.some((b) => b.image);
+
+const textLink =
+  'self-start py-0.5 font-semibold text-primary underline underline-offset-4 hover:decoration-2';
+---
+
+<section aria-labelledby="features-title" class="py-12">
+  <h2 id="features-title" class="text-3xl font-bold">
+    {m.features_title({}, options)}
+  </h2>
+  <ul class="mt-8 grid gap-6 md:grid-cols-2">
+    {cards.map((card) => {
+      const shot = screenshots.get(card.id);
+      const images = shot && getScreenshot(shot.journey, shot.slug);
+      return (
+        <li
+          class:list={[
+            'flex min-w-0 flex-col rounded-box border border-base-300 bg-base-200 p-6',
+            { 'md:col-span-2': card.id === 'security' },
+          ]}
+        >
+          {shot && images ? (
+            <ThemedPicture
+              src={images.light}
+              dark={images.dark}
+              alt={t(shot.alt, locale)}
+              width={640}
+              height={400}
+              class="mb-4 block overflow-hidden rounded-box border border-base-300"
+              imgClass="block h-auto w-full"
+            />
+          ) : (
+            <Icon name={card.icon} size={28} class="text-primary" />
+          )}
+          <h3 class:list={['text-xl font-semibold', { 'mt-4': !shot }]}>{card.title}</h3>
+          <p class="mt-2">{card.text}</p>
+          {card.id === 'api' && (
+            <a href={apiReference.url} class:list={['mt-4', textLink]}>
+              {m.feature_api_link({}, options)}
+            </a>
+          )}
+          {card.id === 'security' && (
+            <>
+              {anyBadge && (
+                <p class="mt-4">{m.feature_security_badges({ date: badgeDate }, options)}</p>
+              )}
+              <ul class="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2">
+                {badgeLinks.map((badge) => (
+                  <li>
+                    {badge.image && badge.alt ? (
+                      <a href={badge.link.url} class="inline-flex min-h-6 items-center py-0.5">
+                        <ThemedPicture
+                          src={badge.image}
+                          alt={badge.alt}
+                          width={badge.image.width}
+                          height={badge.image.height}
+                          class="block"
+                          imgClass="block"
+                        />
+                      </a>
+                    ) : (
+                      <a href={badge.link.url} class={textLink}>
+                        {t(badge.link.label, locale)}
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </li>
+      );
+    })}
+  </ul>
+</section>

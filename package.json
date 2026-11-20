@@ -9,8 +9,10 @@
     "node": ">=26.0.0 <27"
   },
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
+    "fetch-docs-export": "node scripts/fetch-docs-export.mjs",
+    "bump-release": "node scripts/bump-release.mjs",
+    "dev": "node scripts/fetch-docs-export.mjs && astro dev",
+    "build": "node scripts/fetch-docs-export.mjs && astro build",
     "preview": "astro preview",
     "check": "node scripts/check-messages.mjs && astro check",
     "lint": "eslint .",
@@ -33,6 +35,8 @@
     "prettier-plugin-astro": "^1.1.2",
     "tailwindcss": "^4.3.5",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.73.0"
+    "typescript-eslint": "^8.73.0",
+    "yaml": "^2.9.1",
+    "yauzl": "^3.4.0"
   }
 }
