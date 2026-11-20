@@ -10,6 +10,7 @@ denbi:
   description: instance_denbi_description
   logo:
     alt: logo_alt_denbi_elixir_de
+    src: ../assets/logos/denbi.light.svg
     width: 200
     height: 64
 nfdi:
@@ -19,5 +20,6 @@ nfdi:
   description: instance_nfdi_description
   logo:
     alt: logo_alt_nfdi
+    src: ../assets/logos/nfdi.png
     width: 200
     height: 64

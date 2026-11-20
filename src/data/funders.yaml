@@ -13,6 +13,8 @@ denbi:
   role: funder_role_powered_by
   logo:
     alt: logo_alt_denbi_elixir_de
+    src: ../assets/logos/denbi.light.svg
+    dark: ../assets/logos/denbi.dark.svg
     width: 160
     height: 64
 ipk:
@@ -23,6 +25,7 @@ ipk:
   role: funder_role_hosted_by
   logo:
     alt: logo_alt_ipk
+    src: ../assets/logos/ipk.png
     width: 160
     height: 64
 nfdi4biodiversity:
@@ -32,6 +35,8 @@ nfdi4biodiversity:
   role: funder_role_developed_within
   logo:
     alt: logo_alt_nfdi4biodiversity
+    src: ../assets/logos/nfdi4biodiversity.light.svg
+    dark: ../assets/logos/nfdi4biodiversity.dark.svg
     width: 160
     height: 64
 dfg:
@@ -42,5 +47,6 @@ dfg:
   role: funder_role_funded_by
   logo:
     alt: logo_alt_dfg
+    src: ../assets/logos/dfg-funded.png
     width: 160
     height: 64

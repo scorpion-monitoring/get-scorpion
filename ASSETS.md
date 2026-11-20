@@ -9,17 +9,16 @@ Every logo or other third-party asset needs a row here before it is merged (see
 the terms or the permission, the date the permission was given or the policy was checked, and the
 file in this repository.
 
-| Asset                  | Owner                                                                         | Source URL | Licence or permission | Date | File |
-| ---------------------- | ----------------------------------------------------------------------------- | ---------- | --------------------- | ---- | ---- |
-| de.NBI logo            | de.NBI (German Network for Bioinformatics Infrastructure)                     | –          | permission pending    | –    | –    |
-| ELIXIR-DE logo         | ELIXIR Germany                                                                | –          | permission pending    | –    | –    |
-| NFDI4Biodiversity logo | NFDI4Biodiversity                                                             | –          | permission pending    | –    | –    |
-| NFDI4Microbiota logo   | NFDI4Microbiota                                                               | –          | permission pending    | –    | –    |
-| IPK logo               | Leibniz Institute of Plant Genetics and Crop Plant Research (IPK) Gatersleben | –          | permission pending    | –    | –    |
-| DFG logo               | Deutsche Forschungsgemeinschaft (DFG)                                         | –          | permission pending    | –    | –    |
+| Asset                  | Owner                                                                         | Source URL | Licence or permission | Date       | File                                         |
+| ---------------------- | ----------------------------------------------------------------------------- | ---------- | --------------------- | ---------- | -------------------------------------------- |
+| de.NBI logo            | de.NBI (German Network for Bioinformatics Infrastructure)                     | –          | approved              | 20.11.2026 | src/assets/logos/denbi.light.svg             |
+| NFDI logo              | NFDI                                                                          | –          | approved              | 20.11.2026 | src/assets/logos/nfdi.png                    |
+| NFDI4Biodiversity logo | NFDI4Biodiversity                                                             | –          | approved              | 20.11.2026 | src/assets/logos/nfdi4biodiversity.light.svg |
+| IPK logo               | Leibniz Institute of Plant Genetics and Crop Plant Research (IPK) Gatersleben | –          | approved              | 20.11.2026 | src/assets/logos/ipk.png                     |
+| DFG logo               | Deutsche Forschungsgemeinschaft (DFG)                                         | –          | approved              | 20.11.2026 | src/assets/logos/dfg-funded.png              |
 
 Until a row above has a recorded permission, the page shows a neutral placeholder for that logo (the
-organisation name in a dashed box, with the same alt text). No organisation logo file is committed.
+organisation name in a dashed box, with the same alt text). The approved logos are in `src/assets/logos/`.
 
 The following assets are in the repository. Scorpion's own logo comes with the application and is
 under its ISC licence; the GitHub mark is used under GitHub's logo terms.
