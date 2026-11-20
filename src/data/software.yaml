@@ -1,0 +1,61 @@
+# What the Bioschemas ComputationalTool 1.0-RELEASE markup on the landing page says about Scorpion
+# (docs/plan.md §7, decisions of 2026-11-20 in §1). Schema: src/content.config.ts. The markup is built
+# by src/lib/bioschemas.ts; `pnpm test` and `pnpm build` check it against the profile.
+#
+# `description` is a message key (the text is in the page locale). Organisations are ids in
+# funders.yaml (name, url and ROR id come from there) and links are ids in links.yaml. The version is
+# the pinned release from the docs export. EDAM ids and names are from EDAM.tsv
+# (https://edamontology.org/EDAM.tsv, as of 2026-07-06); use the preferred label as `name`.
+
+scorpion:
+  name: Scorpion
+  description: hero_text
+  # bio.tools tool types. Scorpion is handled as a database, with a public REST API.
+  applicationCategory:
+    - Database portal
+    - Web API
+  # EDAM topics (applicationSubCategory). topic_3071's definition is data management.
+  topics:
+    - id: topic_0605
+      name: Informatics
+    - id: topic_3071
+      name: Biological databases
+    - id: topic_3571
+      name: Data governance
+  # EDAM operations (featureList).
+  operations:
+    - id: operation_3760
+      name: Service management
+    - id: operation_2428
+      name: Validation
+    - id: operation_2238
+      name: Statistical calculation
+    - id: operation_0337
+      name: Visualisation
+    - id: operation_3436
+      name: Aggregation
+    - id: operation_3761
+      name: Service discovery
+  keywords:
+    - KPI monitoring
+    - research infrastructure
+    - service registry
+    - FAIR
+    - de.NBI
+    - NFDI
+  license: https://spdx.org/licenses/ISC
+  codeRepository: github
+  softwareHelp: docs
+  authors:
+    - organisation: ipk
+    - person:
+        name: Manuel Feser
+        orcid: 0000-0001-6546-1818
+  # de.NBI is the infrastructure provider.
+  providers:
+    - denbi
+  funders:
+    - dfg
+  citations:
+    - doi: 10.1515/jib-2025-0048
+      title: Evolving bioinformatics services – the journey of KPI metrics with Scorpion

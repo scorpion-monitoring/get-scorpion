@@ -1,5 +1,7 @@
 # Links used in the nav, Get started and the footer (docs/plan.md §2). Schema: src/content.config.ts.
 # `label` is a message key in messages/{en,de}.json; the link text itself lives there.
+# A link has either `url` (the same for every locale) or `urls` with one URL per locale (`en`, `de`;
+# both required).
 
 releases:
   url: https://github.com/scorpion-monitoring/scorpion/releases
@@ -32,3 +34,10 @@ best_practices:
 scorecard:
   url: https://scorecard.dev/viewer/?uri=github.com/scorpion-monitoring/scorpion
   label: link_scorecard
+# IPK's imprint, in the page locale (docs/plan.md §1, decision of 2026-11-20). The privacy policy is
+# our own page (/privacy/, /de/datenschutz/), not IPK's.
+imprint:
+  urls:
+    en: https://www.ipk-gatersleben.de/en/imprint
+    de: https://www.ipk-gatersleben.de/impressum
+  label: link_imprint

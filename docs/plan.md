@@ -1,6 +1,6 @@
 # Plan: Scorpion landing page (`get-scorpion`)
 
-Status: reviewed, 2026-11-19. M1 (bootstrap), M2 (scaffold), M3 (static sections), M4 (features and docs export) and M5 (events feed) are done; corrections found during them are folded in below.
+Status: reviewed, 2026-11-19. M1 (bootstrap), M2 (scaffold), M3 (static sections), M4 (features and docs export), M5 (events feed) and M6 (legal links and metadata) are done; corrections found during them are folded in below.
 
 This is the public landing page at `https://scorpion.bi.denbi.de/`. It belongs to neither
 instance (`/denbi/`, `/nfdi/`) and lives outside the application repo
@@ -14,7 +14,7 @@ instance (`/denbi/`, `/nfdi/`) and lives outside the application repo
 | Repository        | `scorpion-monitoring/get-scorpion`, default branch `main` (created in M1)                            |
 | Deployment        | Container image: unprivileged nginx serving `dist/`, published to GHCR                               |
 | Events            | Runtime feed: adding an event must **not** need an image rebuild or container restart (see §4)       |
-| Legal             | Link to IPK Gatersleben's imprint and privacy pages, choosing the EN or DE page to match the locale  |
+| Legal             | IPK's imprint (EN or DE page to match the locale) and **our own privacy policy** (changed in M6, §1) |
 | Docs / demo / get | Rebuild docs, demo at `https://test.scorpion.bi.denbi.de/`, "Get Scorpion" points to GitHub releases |
 | Contact           | GitHub instead of a mailto link                                                                      |
 | Languages         | English (default, at `/`) and German (`/de/`), using an i18n package                                 |
@@ -47,6 +47,19 @@ Decisions from the M5 question round (2026-11-20):
 | Example event  | `events/bhde26.yaml`: the 5th BioHackathon Germany project "Towards an Integrated Service Management Stack for de.NBI", 7 to 11 December 2026 in Göttingen. The summary is written from the de.NBI event page, which is English only; the German copy needs review.                                                                 |
 | Validation     | Ajv 8.20.0 validates against `events/events.schema.json` in `build-events.mjs` and CI. The browser can't use Ajv (it compiles validators with `new Function`, which `script-src 'self'` blocks), so `src/lib/events.ts` repeats the rules for the client (§4).                                                                      |
 
+Decisions from the M6 question round (2026-11-20):
+
+| Topic            | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Imprint          | The footer links IPK's imprint in the page locale: `https://www.ipk-gatersleben.de/en/imprint` (EN, "Imprint"), `https://www.ipk-gatersleben.de/impressum` (DE, "Impressum"). `links.yaml` gives such a link `urls: { en, de }`.                                                                                                                                                                                                           |
+| Privacy          | **Not IPK's policy.** Our own page for this static host, `/privacy/` and `/de/datenschutz/`, written from scratch: IPK as controller, contact through IPK's data protection officer (`datenschutz@ipk-gatersleben.de`), nginx access log deleted after **7 days**, no cookies, no tracking, no third-party requests, the events feed fetched server-side. It covers only this host; the instances have their own.                          |
+| Meta texts       | Title, meta description and Open Graph title and description per locale as in `messages/` (`page_title`, `meta_description`, `og_title`, `og_description`), approved in the question round.                                                                                                                                                                                                                                                |
+| Twitter/X        | **No** `twitter:*` tags. Sharing previews rely on Open Graph, which LinkedIn reads.                                                                                                                                                                                                                                                                                                                                                        |
+| Structured data  | Bioschemas ComputationalTool 1.0-RELEASE (§7), describing the software. Scorpion is handled as a database: `applicationCategory` "Database portal" and "Web API". Author: IPK (ROR `02skbsp27`) and Manuel Feser (ORCID `0000-0001-6546-1818`); provider: de.NBI (ROR `01vmpm840`, the infrastructure provider); funder: DFG (ROR `018mejw64`); citation: DOI `10.1515/jib-2025-0048`. No bio.tools id, no extra `WebSite`/`WebPage` node. |
+| Open Graph image | `pnpm og-images` renders one 1200×630 PNG per locale with text as paths (opentype.js, Inter 4.1); the PNGs are committed and `pnpm test` fails when they are stale (§7).                                                                                                                                                                                                                                                                   |
+| robots / sitemap | `robots.txt` allows everything and sets **no rules for `/denbi/` and `/nfdi/`**. The sitemap is a hand-written endpoint (`/sitemap.xml`), not `@astrojs/sitemap`: four URLs don't justify four packages.                                                                                                                                                                                                                                   |
+| Favicon          | `favicon.ico` (16, 32, 48 px) and `apple-touch-icon.png` (180 px), cut from the scorpion mark of the dark Scorpion logo by `pnpm og-images`.                                                                                                                                                                                                                                                                                               |
+
 Facts checked on 2026-11-19:
 
 - The application repo uses the **ISC** licence. Its default branch is `dev`, at commit `490d48d`.
@@ -68,10 +81,10 @@ structured data lives in `src/data/*.yaml`, validated by a Zod schema through As
 | 2   | Hero                | "Streamlining Federated KPI Monitoring", one paragraph, logo, and "Current release vX.Y.Z"               | msg; version from the docs export (§3)               |
 | 3   | Get started         | User docs (knowledge base), API reference (`/denbi/docs`), Demo instance                                 | `links.yaml`, msg                                    |
 | 4   | Upcoming events     | Rendered at runtime from `/events/events.json`, five per page; hidden when there are no upcoming events  | events feed (§4)                                     |
-| 5   | Available instances | de.NBI / ELIXIR-DE and NFDI4Biodiversity + NFDI4Microbiota: logo, one line, "Visit"                      | `instances.yaml`, msg                                |
+| 5   | Available instances | de.NBI / ELIXIR-DE and NFDI (the NFDI consortia; renamed in M6): logo, one line, "Visit"                 | `instances.yaml`, msg                                |
 | 6   | Features            | 9 cards (list below)                                                                                     | msg (hand-written); screenshots from the docs export |
 | 7   | Funding and support | de.NBI/ELIXIR-DE (powered by), IPK (hosted by), NFDI4Biodiversity (developed within), DFG (funded by)    | `funders.yaml`                                       |
-| 8   | Footer              | Logo, docs, GitHub, imprint and privacy (IPK, per locale), "Contact via GitHub", release line            | `links.yaml`, msg                                    |
+| 8   | Footer              | Logo, docs, GitHub, "Contact via GitHub", imprint (IPK, per locale), privacy (own page), release line    | `links.yaml`, msg                                    |
 
 **Feature cards** (nine, decided 2026-11-20; final wording in `messages/`, signed off in the M4 PR):
 
@@ -122,19 +135,24 @@ astro.config.mjs        # output: 'static', site, i18n { defaultLocale: 'en', lo
 messages/{en,de}.json   # Paraglide JS (inlang) messages, compiled, typed, tree-shaken
 project.inlang/         # Paraglide project settings; the message-format plugin is loaded from node_modules, not a CDN
 src/pages/index.astro, src/pages/de/index.astro   # both render <Landing locale=…>
+src/pages/privacy.astro, src/pages/de/datenschutz.astro   # our privacy policy (<Privacy locale=…>)
+src/pages/sitemap.xml.ts  # /sitemap.xml with hreflang alternates (src/lib/sitemap.ts)
+src/layouts/            # Page (head, nav, main, footer), Landing, Privacy
 src/content.config.ts   # content collections for src/data/*.yaml, with Zod schemas
-src/components/         # Nav, Hero, GetStarted, Events, Instances, Features, Funding, Footer, LangSwitch, Logo, ThemedPicture, Icon, GitHubMark
-src/lib/                # data and message helpers; generated.ts reads src/assets/generated/; events.ts holds the event rules
-src/data/               # links.yaml, instances.yaml, funders.yaml, screenshots.yaml
+src/components/         # Nav, Hero, GetStarted, Events, Instances, Features, Funding, Footer, LangSwitch, Logo, ThemedPicture, Icon, GitHubMark, PageHead, StructuredData
+src/lib/                # data and message helpers; generated.ts reads src/assets/generated/; events.ts holds the event rules;
+                        # pages.ts (page paths per locale), jsonld.ts, bioschemas.ts, sitemap.ts (pure, importable by scripts)
+src/data/               # links.yaml, instances.yaml, funders.yaml, screenshots.yaml, software.yaml (Bioschemas values)
 src/assets/logos/       # logos (SVG where possible; light/dark variants where needed)
 src/assets/generated/   # git-ignored: docs-export.json, screenshots, badges (fetch-docs-export.mjs)
 scorpion-release.json   # pinned application release { tag, sha256 }
 src/styles/app.css      # Tailwind + daisyUI with both Scorpion themes (copied, see §6)
 src/scripts/events.ts   # client script of the Upcoming events section (§4)
 events/                 # <id>.yaml, _template.yaml, events.schema.json (§4)
-scripts/                # check-messages.mjs, fetch-docs-export.mjs, bump-release.mjs, build-events.mjs (+ .test.mjs, fixtures/), check-theme-drift.mjs
+scripts/                # check-messages.mjs, fetch-docs-export.mjs, bump-release.mjs, build-events.mjs (+ .test.mjs, fixtures/), check-theme-drift.mjs,
+                        # og-images.mjs (+ og-images.json, .test.mjs), check-dist.mjs, bioschemas.test.mjs, lib/ (profile check), bioschemas/ (vendored schema)
 docker/                 # Dockerfile, nginx.conf
-public/                 # robots.txt, favicon.svg, events/events.json (empty fallback)
+public/                 # robots.txt, favicon.ico, apple-touch-icon.png, og/{en,de}.png (committed outputs of `pnpm og-images`), events/events.json (empty fallback)
 ```
 
 - i18n: Astro's built-in i18n routing combined with **Paraglide JS 3** for strings (maintained, compile-time, no runtime loader). Checked in M2 (§12.9), with these findings:
@@ -151,6 +169,8 @@ public/                 # robots.txt, favicon.svg, events/events.json (empty fal
 - Data files (found in M3): each `src/data/*.yaml` is a map from entry id to fields, loaded with Astro's `file()` loader. On its own, `file()` only logs an error when the file is missing or isn't valid YAML, and keeps the entries cached from the last build, so `src/content.config.ts` wraps it to fail the build instead. Schema errors (unknown fields, non-`https:` URLs, unknown message keys) fail `pnpm check` and `pnpm build`; a logo path that doesn't exist fails only `pnpm build`. Visible text stays in `messages/`: the YAML holds message keys, apart from organisation names.
 - Dependencies added in M4: `yauzl` 3.4.0 (MIT; one dependency, `pend`; no build script) to read the zip, chosen over the dependency-free `fflate` because it validates file names and entry sizes and exposes the external attributes needed to reject symlinks; `yaml` 2.9.1 (ISC; no dependencies; already in the tree through Astro) so the fetch script can read `screenshots.yaml`.
 - Dependency added in M5: `ajv` 8.20.0 (MIT; dependencies `fast-deep-equal`, `fast-uri`, `json-schema-traverse`, `require-from-string`; no install script; already in the tree through ESLint, so the lockfile only gains the direct entry). Tests use Node's built-in `node --test`, so there is no test framework.
+- Dependencies added in M6: `opentype.js` 2.0.0 (MIT; no dependencies, no install script) for the Open Graph text, and `sharp` 0.35.5 (Apache-2.0) as a direct dev dependency, the version Astro already uses (pnpm doesn't hoist it, so the script can't import it otherwise). The Inter 4.1 font (OFL-1.1) is downloaded by `pnpm og-images`, checked against a pinned sha256 and cached in `node_modules/.cache/get-scorpion/`; it is not committed and never served. opentype.js 2.0 can't apply Inter's `ccmp` lookups (GSUB type 6, format 2), so the script lays glyphs out itself (character map and pair kerning).
+- `pnpm build` ends with `scripts/check-dist.mjs` (M6): no inline style, no script other than external `/_astro/` modules and at most one JSON-LD block, canonical and Open Graph URLs, the JSON-LD against the profile and the pinned version, `robots.txt`, the sitemap and the images.
 - TypeScript stays on 6.0.x: `typescript-eslint` supports `<6.1` and `@astrojs/check` supports `^6`, while TypeScript 7 is current.
 
 ## 6. Theme, assets, accessibility, privacy
@@ -159,13 +179,18 @@ public/                 # robots.txt, favicon.svg, events/events.json (empty fal
 - **Logos:** use SVG wherever possible. Scorpion's own logo has no SVG upstream: it is the light and dark PNG wordmark ("Powered By Scorpion") from `apps/web/src/lib/assets/` at `490d48d`, optimised to WebP by `astro:assets` (the 2× variant is capped at the 128 px source height). Until permission is recorded, organisation logos render as a neutral placeholder (the name in a dashed box at the logo's size, with the final alt text); swapping in a file is a YAML change (`logo.src`, `logo.dark`). Each logo needs written permission or a published brand policy (de.NBI, ELIXIR-DE, NFDI4Biodiversity, NFDI4Microbiota, IPK, DFG). This is recorded in `ASSETS.md` with source URL, date and terms. Where a logo fails contrast on dark, ship a dark variant through `<picture><source media="(prefers-color-scheme: dark)">`.
 - **Images:** screenshots go through `astro:assets` (sharp) as AVIF or WebP with fixed `width` and `height` and lazy loading. The light and dark screenshot pairs use the same `<picture>` media switch.
 - **Badges:** the fetch script downloads the OpenSSF badge SVGs at build time (Best Practices from bestpractices.dev; Scorecard from api.scorecard.dev, which redirects to img.shields.io). Hotlinking them would make a third-party request at runtime. They are treated as untrusted: https only, content type `image/svg+xml`, at most 16 KB, no script, style, foreignObject, event handlers, external references or `data:` URLs, and the value (level, score) must parse from the `aria-label`. They are served as `<img>` files from our origin, never inlined; the alt text is built from our own messages and the parsed value.
+- **The one inline block (M6):** the built pages carry no inline script, with one exception: the landing pages have exactly one `<script type="application/ld+json">` with the structured data (§7). It is a data block, not a script: browsers never execute that type, so `script-src 'self'` doesn't block it and it causes no CSP violation (checked in Chromium with the CSP below), and crawlers read JSON-LD only inline. Rules: no other inline script; never an executable type; the JSON is serialised with every `<` written as `\u003c` (`serializeJsonLd()` in `src/lib/jsonld.ts`), so no data can end the element. `scripts/check-dist.mjs` enforces this on every build.
 - **No third-party requests:** system fonts, no analytics, no CDN. A strict CSP is set in `nginx.conf`: `default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'`. Astro's `build.inlineStylesheets: 'never'` keeps `style-src` strict. Further headers: HSTS (if the proxy doesn't set it), `X-Content-Type-Options`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Permissions-Policy`.
 - **WCAG 2.2 AA:** the theme tokens are already AA-tuned for text (light). Contrast is checked in **both** themes and both locales in CI (§8). All logos have meaningful alt text ("de.NBI / ELIXIR-DE logo"), screenshots have descriptive alt text, and decorative icons have `aria-hidden`. Other requirements: a skip link, visible `:focus-visible` rings with daisyUI's focus colour, logical heading order (one `h1`), and target size of at least 24×24 px. External links in the same tab, with the destination clear from the link text.
 - **Mobile:** the layout is checked at 320, 375, 768 and 1280 px. The nav collapses to a `<details>` menu, which needs no JavaScript.
 
 ## 7. SEO and sharing
 
-For each locale the page sets a `<title>` and meta description, a canonical URL (`https://scorpion.bi.denbi.de/` and `/de/`), `hreflang` (en, de, x-default) and Open Graph and Twitter tags. The Open Graph image is a static 1200×630 PNG per locale, generated at build from an SVG template. Further: `@astrojs/sitemap` with i18n, `robots.txt`, and a schema.org `SoftwareApplication` JSON-LD block (name, licence ISC, `codeRepository`, `softwareVersion` from the docs export).
+For each page and locale, `src/components/PageHead.astro` sets the `<title>`, meta description, canonical URL (`https://scorpion.bi.denbi.de/`, `/de/`, `/privacy/`, `/de/datenschutz/`), `hreflang` (en, de, x-default) and Open Graph tags (`og:type`, `og:site_name`, `og:title`, `og:description`, `og:url`, `og:image` with type, size and alt, `og:locale` and `og:locale:alternate`), all absolute on `site`. There are no Twitter/X tags (§1). Page paths per locale live in `src/lib/pages.ts`, which the head, the language switcher and the sitemap share. Texts come from `messages/`.
+
+- **Open Graph images:** one 1200×630 PNG per locale in `public/og/`, made by `pnpm og-images` (`scripts/og-images.mjs`), not at build time: rendering SVG text with sharp/librsvg depends on the fonts installed, so CI and local output would differ. The script turns the text into paths with opentype.js and Inter 4.1 (downloaded and checked, see §5), composes the scorpion mark, "Scorpion", the hero title of the locale and the host name on the dark theme, and rasterises with sharp. It also writes the favicons. `scripts/og-images.json` records a hash of the inputs (script, texts, logo, font) and of each output; `pnpm test` fails when the images are stale or edited by hand. `pnpm build` needs no network for them.
+- **Sitemap and robots:** `/sitemap.xml` is a hand-written endpoint (`src/pages/sitemap.xml.ts`), every page in every locale with `xhtml:link` alternates. `public/robots.txt` allows everything and names the sitemap. It applies to the **whole host**, instances included, once the reverse proxy routes `/robots.txt` to the container (M8, §12.1), and deliberately sets no rules for `/denbi/` and `/nfdi/` (§1).
+- **Structured data:** Bioschemas **ComputationalTool 1.0-RELEASE** (`https://bioschemas.org/profiles/ComputationalTool/1.0-RELEASE`) instead of a plain `SoftwareApplication` block: a schema.org `SoftwareApplication` with `dct:conformsTo` the profile and `@context` `{ "@vocab": "https://schema.org/", "dct": "http://purl.org/dc/terms/" }`. One node per landing page, the same `@id` (`https://scorpion.bi.denbi.de/#software`) on both, with `name`, `description` (the hero text) and `inLanguage` in the page locale. The profile's Minimum properties are `@context`, `@type`, `@id`, `dct:conformsTo`, `name`, `description` and `url` (the first draft of this plan missed `@id`); all seven Recommended ones are filled (`applicationCategory`, `applicationSubCategory` as EDAM topics, `author`, `citation`, `featureList` as EDAM operations, `license`, `softwareVersion` from the pinned release); further `codeRepository`, `softwareHelp`, `isAccessibleForFree`, `provider`, `funder` and `keywords`. Values live in `src/data/software.yaml`; organisations and their ROR ids come from `funders.yaml`, URLs from `links.yaml`. `src/lib/bioschemas.ts` builds the node, `src/lib/jsonld.ts` serialises it, and `scripts/lib/bioschemas.mjs` checks it offline against the profile's JSON schema (vendored in `scripts/bioschemas/`, CC-BY-SA-4.0) plus the Minimum properties the schema leaves out, unknown properties and EDAM IRIs. `pnpm test` checks the markup built from the data files, `pnpm build` the built pages. M6b reuses the serialiser and the check for events.
 
 ## 8. CI (GitHub Actions)
 
@@ -185,7 +210,7 @@ Branch protection on `main` (a repository ruleset): pull request required with *
 ## 9. Deployment
 
 - `docker/Dockerfile` is multi-stage: `node:<lts>-alpine@sha256:…` builds, then `nginxinc/nginx-unprivileged:<ver>-alpine@sha256:…` serves. The container runs as a non-root user on port 8080 with a read-only root filesystem and `/events/` as a volume. It has a `/healthz` endpoint.
-- `nginx.conf` sets the headers from §6. Hashed assets get `Cache-Control: immutable` for a year, HTML and `/events/` get `no-cache`, and there is a custom 404. The container only serves `/`, `/de/` and assets. Routing `/denbi/` and `/nfdi/` stays with the reverse proxy.
+- `nginx.conf` sets the headers from §6, and access logs are deleted after **7 days**, as the privacy page states (§1, §12.5). Hashed assets get `Cache-Control: immutable` for a year, HTML and `/events/` get `no-cache`, and there is a custom 404. The container only serves `/`, `/de/`, `/privacy/`, `/de/datenschutz/`, `/robots.txt`, `/sitemap.xml` and assets. Routing `/denbi/` and `/nfdi/` stays with the reverse proxy.
 - Rollout: the operator pulls the new tag (or Watchtower/Renovate on the host does). The exact step depends on the open point below.
 
 ## 10. Repository basics
@@ -202,7 +227,8 @@ Branch protection on `main` (a repository ruleset): pull request required with *
 3. **Static sections:** nav, hero, get started, instances, funders and footer, with data files and logos (placeholder logos until permission is confirmed).
 4. **Features and docs export:** the fetch script, `scorpion-release.json`, `pnpm bump-release`, screenshots, feature cards, the version line and the badges.
 5. **Events feed:** schema, template, `build-events.mjs`, client script and `events.yml`, plus the feature card pairing carried over from the M4 review (§2).
-6. **Legal links and metadata:** IPK links, SEO, Open Graph images, sitemap and JSON-LD.
+6. **Legal links and metadata:** IPK imprint and our own privacy page, SEO, Open Graph images, favicon, sitemap, robots.txt and Bioschemas JSON-LD.
+   - **6b. Events for TeSS** (the PR after M6): event types, Bioschemas markup for events (the Event or Course profiles, reusing `serializeJsonLd()` and the offline profile check from M6), and an `events.jsonld` feed that ELIXIR TeSS can harvest.
 7. **Quality gates:** html-validate, axe/Playwright matrix, lychee jobs, Scorecard, and the scheduled docs-export bump (`upstream.yml`, with a GitHub App token).
 8. **Container and deployment:** Dockerfile, nginx config, `release.yml` and the host-side events timer, followed by the cutover from the old Astro site.
 
@@ -212,7 +238,7 @@ Branch protection on `main` (a repository ruleset): pull request required with *
 2. ~~**User documentation does not exist yet.**~~ Resolved in M3: it exists as the knowledge base at `https://scorpion-monitoring.github.io/knowledgebase/` (§1).
 3. **The live instances seem to lag behind** (`/denbi/catalog/services` returns 404). Decided in M3: the catalogue isn't linked until the rollout (§1). Still open: when to add it.
 4. ~~**Contact:**~~ Resolved in M3: the new-issue chooser (§1).
-5. **IPK legal pages:** confirm that IPK's imprint and privacy policy cover this host, including nginx access logs and the GitHub-hosted events asset, which is fetched server-side. Get the EN and DE URLs.
+5. **Legal pages:** partly resolved in M6. The imprint is IPK's (EN and DE URLs in `links.yaml`). The privacy policy is our own page (§1), so IPK's policy no longer needs to cover this host. Still open (owner: Manuel Feser, before the M8 cutover): IPK's data protection officer reviews the text, in particular the legal basis (Art. 6(1)(e) GDPR); M8 configures nginx to delete access logs after 7 days, and the reverse proxy's own logs (§12.1) must match what the page says or the page must name them.
 6. **Logo permissions** for six organisations, plus SVG sources and dark variants.
 7. **German copy** needs a native-speaker review. Feature wording: nine cards decided in M4 (§1); the final copy is signed off in the M4 pull request.
 8. **Screenshots** come from journey runs. Check that they show no real personal data, and that the ones chosen still exist after upstream renames (the build fails if they don't). Checked for v0.16.1: all candidates show generated ids and `example.org` addresses only. `j12/export-button` has overlapping chart axis labels (an upstream rendering issue) and isn't used.

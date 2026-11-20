@@ -93,6 +93,43 @@ out why the asset changed.
    screenshot shows. Removing a card's entry shows its icon instead.
 4. Run `pnpm build`. It fails if the pair isn't in the pinned docs export.
 
+### Change the meta texts or the Open Graph image
+
+- **Title and description:** `page_title`, `meta_description`, `og_title` and `og_description` in
+  `messages/en.json` and `messages/de.json` (privacy page: `privacy_page_title`,
+  `privacy_meta_description`). Keep a description to about 150 characters, and claim nothing the page
+  doesn't say. No Twitter/X tags; link previews use Open Graph.
+- **Open Graph image:** it shows the hero title (`hero_title`) of each locale. After changing that
+  text, the logo or [scripts/og-images.mjs](scripts/og-images.mjs) (layout, colours), run
+  `pnpm og-images`, look at `public/og/en.png` and `public/og/de.png`, and commit them together with
+  `scripts/og-images.json`. `pnpm test` fails while they are stale. Update `og_image_alt` if the
+  image text changes. The favicons come from the same script.
+- Link previews can only be checked once the page is live (after the M8 cutover), for example with
+  LinkedIn's Post Inspector.
+
+### Change the structured data (Bioschemas)
+
+The landing page carries Bioschemas
+[ComputationalTool 1.0-RELEASE](https://bioschemas.org/profiles/ComputationalTool/1.0-RELEASE)
+markup as JSON-LD (docs/plan.md §7).
+
+1. Edit [src/data/software.yaml](src/data/software.yaml): category, EDAM topics and operations (look
+   the ids up in [EDAM](https://edamontology.org/) and use the preferred label as `name`), keywords,
+   authors, providers, funders and citations. Organisations are ids in `funders.yaml` (add a `ror`
+   there); links are ids in `links.yaml`. The description is the hero text; the version is the pinned
+   release.
+2. Run `pnpm check` (schema of the data file), `pnpm test` (builds the markup for both locales and
+   checks it offline against the profile) and `pnpm build` (checks the built pages).
+3. After the deploy, check the live page with the Bioschemas validator or Google's Rich Results Test.
+
+### Change the imprint or privacy page
+
+The imprint is IPK's: `imprint` in [src/data/links.yaml](src/data/links.yaml) with one URL per
+locale (`urls.en`, `urls.de`, both required, https only). The privacy policy is our own page
+(`src/layouts/Privacy.astro`, texts `privacy_*` in `messages/`). It must stay true for the deployed
+host: if logging, retention or the events delivery change, update it in the same pull request and
+change `privacy_updated`. Changes to its content need the approval of IPK's data protection officer.
+
 ### Change a funder or instance logo
 
 Until a logo is added, the page shows a placeholder: the organisation name in a dashed box, at the

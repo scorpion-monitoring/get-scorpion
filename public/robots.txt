@@ -1,0 +1,8 @@
+# robots.txt of scorpion.bi.denbi.de, served from the landing page (docs/plan.md §7).
+# It applies to the whole host once the reverse proxy routes /robots.txt to the landing page
+# container (M8). It deliberately sets no rules for the instances at /denbi/ and /nfdi/
+# (decision of 2026-11-20): everything may be crawled.
+User-agent: *
+Allow: /
+
+Sitemap: https://scorpion.bi.denbi.de/sitemap.xml

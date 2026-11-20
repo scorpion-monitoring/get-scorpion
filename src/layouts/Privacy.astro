@@ -1,0 +1,92 @@
+---
+// Our own privacy policy for this static host (docs/plan.md §1, §12.5, decisions of 2026-11-20):
+// IPK as controller, contact through IPK's data protection officer, a server access log kept for
+// 7 days, no cookies, no tracking, no third-party requests. It covers only this landing page; the
+// instances have their own. Every text is in messages/ (privacy_*).
+import { m } from '../paraglide/messages.js';
+import type { Locale } from '../paraglide/runtime.js';
+import Page from './Page.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const options = { locale };
+
+const sections = [
+  {
+    title: m.privacy_logs_title({}, options),
+    paragraphs: [
+      m.privacy_logs_text({}, options),
+      m.privacy_logs_purpose({}, options),
+      m.privacy_logs_retention({}, options),
+    ],
+  },
+  {
+    title: m.privacy_nothing_title({}, options),
+    paragraphs: [m.privacy_nothing_text({}, options)],
+  },
+  {
+    title: m.privacy_events_title({}, options),
+    paragraphs: [m.privacy_events_text({}, options)],
+  },
+  {
+    title: m.privacy_links_title({}, options),
+    paragraphs: [m.privacy_links_text({}, options)],
+  },
+  {
+    title: m.privacy_rights_title({}, options),
+    paragraphs: [m.privacy_rights_text({}, options)],
+  },
+];
+const email = m.privacy_dpo_email({}, options);
+---
+
+<Page
+  locale={locale}
+  page="privacy"
+  title={m.privacy_page_title({}, options)}
+  description={m.privacy_meta_description({}, options)}
+>
+  <article class="max-w-3xl py-10">
+    <h1 class="text-2xl font-bold break-words sm:text-3xl md:text-4xl">
+      {m.privacy_title({}, options)}
+    </h1>
+    <p class="mt-6">{m.privacy_scope({}, options)}</p>
+
+    <section aria-labelledby="privacy-controller" class="mt-8">
+      <h2 id="privacy-controller" class="text-2xl font-bold">
+        {m.privacy_controller_title({}, options)}
+      </h2>
+      <p class="mt-3">{m.privacy_controller_text({}, options)}</p>
+      <address class="mt-3 not-italic">
+        {m.privacy_controller_name({}, options)}
+        <br />
+        {m.privacy_controller_address({}, options)}
+      </address>
+      <p class="mt-3">
+        {m.privacy_contact_text({}, options)}
+        <a
+          href={`mailto:${email}`}
+          class="inline-flex min-h-6 items-center underline underline-offset-4 hover:decoration-2"
+        >
+          {email}
+        </a>
+      </p>
+    </section>
+
+    {sections.map((section, i) => (
+      <section aria-labelledby={`privacy-${i}`} class="mt-8">
+        <h2 id={`privacy-${i}`} class="text-2xl font-bold">
+          {section.title}
+        </h2>
+        {section.paragraphs.map((text) => (
+          <p class="mt-3">{text}</p>
+        ))}
+      </section>
+    ))}
+
+    <p class="mt-10 text-sm">{m.privacy_updated({}, options)}</p>
+  </article>
+</Page>

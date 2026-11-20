@@ -2,8 +2,8 @@
 // Site header with the main navigation and the language switcher (docs/plan.md §2, section 1).
 // On narrow screens the main links collapse into a <details> menu, which needs no JavaScript
 // (§6). The two lists hold the same links; only one of them is displayed at any width.
-import { getRelativeLocaleUrl } from 'astro:i18n';
 import { getLink } from '../lib/data';
+import { pagePath, type PageId } from '../lib/pages';
 import { t } from '../lib/i18n';
 import { m } from '../paraglide/messages.js';
 import type { Locale } from '../paraglide/runtime.js';
@@ -13,18 +13,20 @@ import LangSwitch from './LangSwitch.astro';
 
 interface Props {
   locale: Locale;
+  /** The current page, so the language switcher links to its translation. */
+  page: PageId;
 }
 
-const { locale } = Astro.props;
+const { locale, page } = Astro.props;
 const options = { locale };
 
 const textLinks = await Promise.all(
   ['releases', 'docs', 'contact'].map(async (id) => {
-    const link = await getLink(id);
+    const link = await getLink(id, locale);
     return { url: link.url, text: t(link.label, locale) };
   }),
 );
-const github = await getLink('github');
+const github = await getLink('github', locale);
 
 const linkClass =
   'inline-flex min-h-11 items-center gap-2 rounded-field px-3 py-2 underline-offset-4 hover:underline';
@@ -32,10 +34,7 @@ const linkClass =
 
 <header class="border-b border-base-300">
   <div class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2">
-    <a
-      href={getRelativeLocaleUrl(locale)}
-      class:list={[linkClass, '-ml-3 mr-auto text-lg font-bold']}
-    >
+    <a href={pagePath('home', locale)} class:list={[linkClass, '-ml-3 mr-auto text-lg font-bold']}>
       Scorpion
     </a>
     <nav aria-label={m.nav_label({}, options)} class="flex items-center">
@@ -76,6 +75,6 @@ const linkClass =
         </ul>
       </details>
     </nav>
-    <LangSwitch locale={locale} />
+    <LangSwitch locale={locale} page={page} />
   </div>
 </header>

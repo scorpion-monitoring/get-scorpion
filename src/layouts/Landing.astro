@@ -1,18 +1,16 @@
 ---
-// The page shell with the sections in the order of docs/plan.md §2. Canonical URL, meta description
-// and Open Graph tags come with milestone 6 (docs/plan.md §7).
-import { getAbsoluteLocaleUrl } from 'astro:i18n';
+// The landing page with the sections in the order of docs/plan.md §2, its head metadata (§7) and
+// the Bioschemas structured data.
 import Events from '../components/Events.astro';
 import Features from '../components/Features.astro';
-import Footer from '../components/Footer.astro';
 import Funding from '../components/Funding.astro';
 import GetStarted from '../components/GetStarted.astro';
 import Hero from '../components/Hero.astro';
 import Instances from '../components/Instances.astro';
-import Nav from '../components/Nav.astro';
+import StructuredData from '../components/StructuredData.astro';
 import { m } from '../paraglide/messages.js';
-import { baseLocale, locales, type Locale } from '../paraglide/runtime.js';
-import '../styles/app.css';
+import type { Locale } from '../paraglide/runtime.js';
+import Page from './Page.astro';
 
 interface Props {
   locale: Locale;
@@ -22,33 +20,19 @@ const { locale } = Astro.props;
 const options = { locale };
 ---
 
-<!doctype html>
-<html lang={locale}>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{m.page_title({}, options)}</title>
-    {locales.map((l) => (
-      <link rel="alternate" hreflang={l} href={getAbsoluteLocaleUrl(l)} />
-    ))}
-    <link rel="alternate" hreflang="x-default" href={getAbsoluteLocaleUrl(baseLocale)} />
-  </head>
-  <body class="min-h-screen bg-base-100 text-base-content">
-    <a
-      href="#main"
-      class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-box focus:bg-base-100 focus:px-4 focus:py-2"
-    >
-      {m.skip_to_content({}, options)}
-    </a>
-    <Nav locale={locale} />
-    <main id="main" tabindex="-1" class="mx-auto max-w-5xl px-4">
-      <Hero locale={locale} />
-      <GetStarted locale={locale} />
-      <Events locale={locale} />
-      <Instances locale={locale} />
-      <Features locale={locale} />
-      <Funding locale={locale} />
-    </main>
-    <Footer locale={locale} />
-  </body>
-</html>
+<Page
+  locale={locale}
+  page="home"
+  title={m.page_title({}, options)}
+  description={m.meta_description({}, options)}
+  ogTitle={m.og_title({}, options)}
+  ogDescription={m.og_description({}, options)}
+>
+  <StructuredData slot="head" locale={locale} />
+  <Hero locale={locale} />
+  <GetStarted locale={locale} />
+  <Events locale={locale} />
+  <Instances locale={locale} />
+  <Features locale={locale} />
+  <Funding locale={locale} />
+</Page>

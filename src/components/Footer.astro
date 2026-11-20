@@ -1,9 +1,11 @@
 ---
-// Footer (docs/plan.md §2, section 8): logo, docs, GitHub, contact and the release line.
+// Footer (docs/plan.md §2, section 8): logo, docs, GitHub, contact, IPK's imprint and our privacy
+// policy (both in the page locale), and the release line.
 import logoDark from '../assets/logos/scorpion-dark.png';
 import logoLight from '../assets/logos/scorpion-light.png';
 import { getLink } from '../lib/data';
 import { getRelease } from '../lib/generated';
+import { pagePath } from '../lib/pages';
 import { t } from '../lib/i18n';
 import { m } from '../paraglide/messages.js';
 import type { Locale } from '../paraglide/runtime.js';
@@ -17,10 +19,11 @@ interface Props {
 
 const { locale } = Astro.props;
 const options = { locale };
-const docs = await getLink('docs');
-const github = await getLink('github');
-const contact = await getLink('contact');
-const releases = await getLink('releases');
+const docs = await getLink('docs', locale);
+const github = await getLink('github', locale);
+const contact = await getLink('contact', locale);
+const releases = await getLink('releases', locale);
+const imprint = await getLink('imprint', locale);
 const release = getRelease();
 
 const linkClass =
@@ -56,7 +59,16 @@ const linkClass =
             {m.footer_contact({}, options)}
           </a>
         </li>
-        {/* M6: IPK imprint and privacy links, per locale (docs/plan.md §1, §12.5). */}
+        <li>
+          <a href={imprint.url} class={linkClass}>
+            {t(imprint.label, locale)}
+          </a>
+        </li>
+        <li>
+          <a href={pagePath('privacy', locale)} class={linkClass}>
+            {m.link_privacy({}, options)}
+          </a>
+        </li>
       </ul>
     </nav>
   </div>

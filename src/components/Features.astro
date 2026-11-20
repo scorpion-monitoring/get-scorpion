@@ -98,9 +98,9 @@ const lastOfOdd = (group: typeof cards) => (group.length % 2 === 1 ? group.at(-1
 const wide = new Set([lastOfOdd(withShot), lastOfOdd(withIcon)]);
 const ordered = [...withShot, ...withIcon];
 
-const apiReference = await getLink('api_reference');
-const bestPracticesLink = await getLink('best_practices');
-const scorecardLink = await getLink('scorecard');
+const apiReference = await getLink('api_reference', locale);
+const bestPracticesLink = await getLink('best_practices', locale);
+const scorecardLink = await getLink('scorecard', locale);
 
 const badges = getBadges();
 const badgeDate = new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeZone: 'UTC' }).format(

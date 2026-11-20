@@ -6,7 +6,7 @@
 // Text shown on the page is not stored here: fields ending in a message key (`label`, `description`,
 // `alt`, `role`) name a key in messages/en.json, and the page renders it in the page locale. Only
 // proper names that are not translated (organisation names) are stored as text.
-import { defineCollection, type SchemaContext } from 'astro:content';
+import { defineCollection, reference, type SchemaContext } from 'astro:content';
 import { file, type Loader } from 'astro/loaders';
 import { z } from 'astro/zod';
 import en from '../messages/en.json';
@@ -19,7 +19,10 @@ const messageKey = z.string().refine((key) => messageKeys.has(key), {
     `Unknown message key "${String(issue.input)}"; add it to messages/en.json and messages/de.json`,
 });
 
-const httpsUrl = z.url({ protocol: /^https$/, error: 'Must be an https: URL' });
+const httpsUrl = z.url({
+  protocol: /^https$/,
+  error: (issue) => (issue.input === undefined ? 'Missing URL' : 'Must be an https: URL'),
+});
 
 /** Display order on the page, lowest first. */
 const order = z.number().int().nonnegative();
@@ -71,13 +74,28 @@ function strictFile(fileName: string): Loader {
   };
 }
 
+/**
+ * One https: URL per page locale. Both are required, so a missing locale fails `pnpm check`. Keep
+ * the keys in step with `locales` in project.inlang/settings.json.
+ */
+const urlPerLocale = z.strictObject({ en: httpsUrl, de: httpsUrl });
+
+/**
+ * A link has either one `url` for every locale, or `urls` with one URL per locale (for pages that
+ * exist in both languages, such as the IPK imprint). src/lib/data.ts picks the page locale's URL.
+ */
 const links = defineCollection({
   loader: strictFile('src/data/links.yaml'),
-  schema: z.strictObject({
-    url: httpsUrl,
-    /** Message key of the link text. */
-    label: messageKey,
-  }),
+  schema: z
+    .strictObject({
+      url: httpsUrl.optional(),
+      urls: urlPerLocale.optional(),
+      /** Message key of the link text. */
+      label: messageKey,
+    })
+    .refine((l) => (l.url === undefined) !== (l.urls === undefined), {
+      error: 'A link needs exactly one of `url` (all locales) and `urls` (one per locale)',
+    }),
 });
 
 const instances = defineCollection({
@@ -103,6 +121,13 @@ const funders = defineCollection({
       /** Message key of the role, for example "Powered by". */
       role: messageKey,
       logo: logo(ctx),
+      /** ROR id as a URL, for the structured data (docs/plan.md §7). Look it up on ror.org. */
+      ror: z
+        .string()
+        .regex(/^https:\/\/ror\.org\/0[a-z0-9]{6}[0-9]{2}$/, {
+          error: 'A ROR id URL like https://ror.org/02skbsp27',
+        })
+        .optional(),
     }),
 });
 
@@ -125,4 +150,62 @@ const screenshots = defineCollection({
   }),
 });
 
-export const collections = { links, instances, funders, screenshots };
+/** An EDAM concept: `id` like topic_0605 or operation_3760, `name` its preferred label in EDAM. */
+const edamTerm = (kind: 'topic' | 'operation') =>
+  z.strictObject({
+    id: z.string().regex(new RegExp(`^${kind}_\\d{4}$`), { error: `An EDAM id like ${kind}_0001` }),
+    name: z.string().min(1),
+  });
+
+/**
+ * What the Bioschemas ComputationalTool markup says about Scorpion (docs/plan.md §7). The one entry
+ * is `scorpion`. Organisations are ids in funders.yaml and URLs are ids in links.yaml, so no value
+ * is repeated here; the version comes from the docs export.
+ */
+const software = defineCollection({
+  loader: strictFile('src/data/software.yaml'),
+  schema: z.strictObject({
+    name: z.string().min(1),
+    /** Message key of the description, in the page locale. */
+    description: messageKey,
+    /** bio.tools tool types, for example "Database portal". */
+    applicationCategory: z.array(z.string().min(1)).min(1),
+    /** EDAM topics (applicationSubCategory). */
+    topics: z.array(edamTerm('topic')).min(1),
+    /** EDAM operations (featureList). */
+    operations: z.array(edamTerm('operation')).min(1),
+    keywords: z.array(z.string().min(1)).min(1),
+    /** SPDX licence URL. */
+    license: z.string().regex(/^https:\/\/spdx\.org\/licenses\/[A-Za-z0-9.+-]+$/, {
+      error: 'An SPDX URL like https://spdx.org/licenses/ISC',
+    }),
+    /** Links (ids in links.yaml). */
+    codeRepository: reference('links'),
+    softwareHelp: reference('links'),
+    authors: z
+      .array(
+        z.union([
+          z.strictObject({ organisation: reference('funders') }),
+          z.strictObject({
+            person: z.strictObject({
+              name: z.string().min(1),
+              orcid: z.string().regex(/^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$/, {
+                error: 'An ORCID iD like 0000-0001-6546-1818',
+              }),
+            }),
+          }),
+        ]),
+      )
+      .min(1),
+    providers: z.array(reference('funders')).min(1),
+    funders: z.array(reference('funders')),
+    citations: z.array(
+      z.strictObject({
+        doi: z.string().regex(/^10\.\d{4,9}\/\S+$/, { error: 'A DOI like 10.1515/jib-2025-0048' }),
+        title: z.string().min(1),
+      }),
+    ),
+  }),
+});
+
+export const collections = { links, instances, funders, screenshots, software };
