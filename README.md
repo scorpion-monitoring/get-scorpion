@@ -35,6 +35,16 @@ pnpm build         # static site in dist/
 pnpm preview       # serves dist/ locally
 ```
 
+`pnpm build` and `pnpm dev` first run `pnpm fetch-docs-export`, which needs network access to GitHub
+and to the OpenSSF badge services. It downloads the `docs-export.zip` of the Scorpion release pinned in
+[scorpion-release.json](scorpion-release.json), checks its sha256, and extracts the version and the
+feature screenshots into the git-ignored `src/assets/generated/`; the zip is cached in
+`node_modules/.cache/get-scorpion/`, so later builds work offline. The badges are downloaded on every
+build; without them the page shows text links. `pnpm check` needs no network.
+
+To move to a newer Scorpion release, run `pnpm bump-release` (see
+[CONTRIBUTING.md](CONTRIBUTING.md#bump-the-scorpion-release)).
+
 Before you open a pull request, run the checks that CI runs:
 
 ```sh

@@ -1,8 +1,11 @@
 ---
-// Hero (docs/plan.md §2, section 2): the page's only <h1>, one paragraph and the Scorpion logo.
-// The "Current release vX.Y.Z" line comes from the docs export in M4.
+// Hero (docs/plan.md §2, section 2): the page's only <h1>, one paragraph, the Scorpion logo and the
+// "Current release vX.Y.Z" line. The version is the one in the docs export of the release pinned in
+// scorpion-release.json (§3), so it can be up to a week behind the newest release.
 import logoDark from '../assets/logos/scorpion-dark.png';
 import logoLight from '../assets/logos/scorpion-light.png';
+import { getLink } from '../lib/data';
+import { getRelease } from '../lib/generated';
 import { m } from '../paraglide/messages.js';
 import type { Locale } from '../paraglide/runtime.js';
 import Logo from './Logo.astro';
@@ -13,13 +16,22 @@ interface Props {
 
 const { locale } = Astro.props;
 const options = { locale };
+const release = getRelease();
+const releases = await getLink('releases');
 ---
 
 <div class="flex flex-col-reverse items-start gap-8 py-12 md:flex-row md:items-center md:justify-between md:py-20">
   <div class="max-w-2xl">
     <h1 class="text-4xl font-bold text-balance md:text-5xl">{m.hero_title({}, options)}</h1>
     <p class="mt-6 text-lg">{m.hero_text({}, options)}</p>
-    {/* M4: "Current release vX.Y.Z" line, from the docs export (docs/plan.md §3). */}
+    <p class="mt-6">
+      <a
+        href={`${releases.url}/tag/${release.tag}`}
+        class="inline-flex min-h-6 items-center font-semibold text-primary underline underline-offset-4 hover:decoration-2"
+      >
+        {m.hero_release({ version: release.tag }, options)}
+      </a>
+    </p>
   </div>
   <Logo
     src={logoLight}

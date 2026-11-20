@@ -24,3 +24,11 @@ contact:
 github:
   url: https://github.com/scorpion-monitoring/scorpion
   label: link_github
+# OpenSSF badges of the application repo (feature card "Security assurance"). The badge images are
+# downloaded at build time by scripts/fetch-docs-export.mjs and served from our own origin (§6).
+best_practices:
+  url: https://www.bestpractices.dev/projects/15237
+  label: link_best_practices
+scorecard:
+  url: https://scorecard.dev/viewer/?uri=github.com/scorpion-monitoring/scorpion
+  label: link_scorecard

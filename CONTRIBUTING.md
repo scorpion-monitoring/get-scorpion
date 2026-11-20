@@ -12,7 +12,7 @@ about the application itself belong in the
    from `packageManager` in [package.json](package.json).
 3. Open a pull request against `main`. CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) has to
    be green: formatting, `actionlint` and `zizmor` for the workflows, and the `build` job (ESLint,
-   `astro check` and the build), which later milestones extend.
+   `astro check` and the build, which downloads the pinned docs export), which later milestones extend.
 4. Pull requests are squash-merged, and the branch is deleted after the merge. `main` takes no direct
    pushes and keeps a linear history.
 
@@ -49,6 +49,36 @@ _Available from M5 (events feed)._
 
 The event is live about 15 minutes after the merge, with no rebuild or restart: CI publishes a new
 `events.json`, and the host fetches it (docs/plan.md §4). Past events disappear by themselves.
+
+### Bump the Scorpion release
+
+`scorpion-release.json` pins the application release whose `docs-export.zip` the build uses: the
+version line in the hero and the footer, and the feature screenshots (docs/plan.md §3). It does not
+follow new releases by itself; until a scheduled workflow does this (planned for M7), bump it by hand
+about once a week:
+
+1. Run `pnpm bump-release` (or `pnpm bump-release v0.17.0` for a specific tag). It downloads the
+   zip of the latest release, checks it like the build does, and writes the new `tag` and `sha256`.
+2. Run `pnpm build` and look at the page in both themes: the screenshots may have changed. If a
+   mapped screenshot was renamed or removed upstream, the build fails and names it; pick a new one
+   (next how-to).
+3. Open a pull request with `scorpion-release.json` (and `src/data/screenshots.yaml` if changed).
+
+GitHub reports no digest for the asset, so the hash comes from the bump download. A build whose
+download doesn't match the pinned hash fails; never "fix" that by editing the hash without finding
+out why the asset changed.
+
+### Change a feature card's screenshot
+
+1. Download `docs-export.zip` of the pinned release, or look in `src/assets/generated/` after a build
+   for the pairs in use. `screenshots.json` in the zip lists every pair as `journey`, `slug`,
+   `light` and `dark`. Slugs are only unique within a journey, so always give both.
+2. Look at the light **and** the dark image. They must show test data only, no real names, email
+   addresses or other personal data (docs/plan.md §12.8).
+3. In `src/data/screenshots.yaml`, set `journey` and `slug` under the card id, and update the alt
+   text named by `alt` in `messages/en.json` and `messages/de.json` so it describes what the new
+   screenshot shows. Removing a card's entry shows its icon instead.
+4. Run `pnpm build`. It fails if the pair isn't in the pinned docs export.
 
 ### Change a funder or instance logo
 
