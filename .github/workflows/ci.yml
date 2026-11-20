@@ -32,12 +32,17 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
 
-  # Separate from `format` so that job stays fast. Later milestones add html-validate, link checks
-  # and the browser tests here (docs/plan.md §8).
+  # Separate from `format` so that job stays fast. Checks the built site with html-validate and an
+  # offline lychee run, and hands dist/ to the `browser` job (docs/plan.md §8).
   build:
     name: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      # lychee ships no action we use. The release binary is pinned by version and checked against
+      # the sha256 file of the release; update both together (same in links.yml).
+      LYCHEE_VERSION: 0.24.2
+      LYCHEE_SHA256: 1f4e0ef7f6554a6ed33dd7ac144fb2e1bbed98598e7af973042fc5cd43951c9a
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -57,6 +62,64 @@ jobs:
       # Also compiles the Paraglide messages, so a missing message key fails here.
       - run: pnpm check
       - run: pnpm build
+      # html-validate on dist/ (.htmlvalidate.mjs; the exceptions are in scripts/check-html.mjs).
+      - run: pnpm check:html
+      - name: Install lychee
+        run: |
+          archive="lychee-x86_64-unknown-linux-gnu.tar.gz"
+          curl -fsSLo "$RUNNER_TEMP/$archive" \
+            "https://github.com/lycheeverse/lychee/releases/download/lychee-v${LYCHEE_VERSION}/$archive"
+          echo "${LYCHEE_SHA256}  $RUNNER_TEMP/$archive" | sha256sum --check --strict
+          mkdir -p "$RUNNER_TEMP/lychee"
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP/lychee" --strip-components=1 \
+            lychee-x86_64-unknown-linux-gnu/lychee
+      # Internal links and fragments only; the external URLs are checked by links.yml.
+      - run: PATH="$RUNNER_TEMP/lychee:$PATH" pnpm check:links
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 1
+
+  # Playwright and axe-core on the built pages: / and /de/, light and dark, 375 and 1280 px, plus
+  # the §6 rules axe doesn't check (scripts/check-browser.mjs, docs/plan.md §8). Chromium only.
+  browser:
+    name: browser
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Reads the pnpm version from `packageManager` in package.json.
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist
+      # The browser build belongs to the playwright-core version, so that is the cache key.
+      - name: Read the playwright-core version
+        id: playwright
+        run: echo "version=$(node -p "require('playwright-core/package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: browser-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-shell-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium
+        if: steps.browser-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright-core install --with-deps --only-shell chromium
+      - name: Install Chromium's system packages
+        if: steps.browser-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright-core install-deps chromium
+      - run: pnpm check:browser
 
   actionlint:
     name: actionlint
