@@ -8,12 +8,11 @@ import type { Locale } from '../paraglide/runtime.js';
 
 export const PAGES = {
   home: { en: '/', de: '/de/' },
-  privacy: { en: '/privacy/', de: '/de/datenschutz/' },
 } as const satisfies Record<string, Record<Locale, string>>;
 
 export type PageId = keyof typeof PAGES;
 
-/** The path of a page in a locale, for example `/de/datenschutz/`. */
+/** The path of a page in a locale, for example `/de/`. */
 export function pagePath(page: PageId, locale: Locale): string {
   return PAGES[page][locale];
 }

@@ -170,8 +170,7 @@ out why the asset changed.
 ### Change the meta texts or the Open Graph image
 
 - **Title and description:** `page_title`, `meta_description`, `og_title` and `og_description` in
-  `messages/en.json` and `messages/de.json` (privacy page: `privacy_page_title`,
-  `privacy_meta_description`). Keep a description to about 150 characters, and claim nothing the page
+  `messages/en.json` and `messages/de.json`. Keep a description to about 150 characters, and claim nothing the page
   doesn't say. No Twitter/X tags; link previews use Open Graph.
 - **Open Graph image:** it shows the hero title (`hero_title`) of each locale. After changing that
   text, the logo or [scripts/og-images.mjs](scripts/og-images.mjs) (layout, colours), run
@@ -199,13 +198,12 @@ markup as JSON-LD (docs/plan.md §7).
    checks it offline against the profile) and `pnpm build` (checks the built pages).
 3. After the deploy, check the live page with the Bioschemas validator or Google's Rich Results Test.
 
-### Change the imprint or privacy page
+### Change the imprint or privacy links
 
-The imprint is IPK's: `imprint` in [src/data/links.yaml](src/data/links.yaml) with one URL per
-locale (`urls.en`, `urls.de`, both required, https only). The privacy policy is our own page
-(`src/layouts/Privacy.astro`, texts `privacy_*` in `messages/`). It must stay true for the deployed
-host: if logging, retention or the events delivery change, update it in the same pull request and
-change `privacy_updated`. Changes to its content need the approval of IPK's data protection officer.
+The imprint and the privacy policy are IPK's: `imprint` and `privacy` in
+[src/data/links.yaml](src/data/links.yaml), each with one URL per locale (`urls.en`, `urls.de`, both
+required, https only). The standard IPK privacy policy applies to this site, so there is no page of
+our own.
 
 ### Change a funder or instance logo
 
