@@ -1,0 +1,10 @@
+{
+  "comment": "Written by `pnpm og-images` (scripts/og-images.mjs); checked by `pnpm test`.",
+  "inputs": "32560dacdc8d4369322caab0d89e6f3ed8b2f1c26be9fc6b3872e5d63fc2fcdf",
+  "outputs": {
+    "public/og/en.png": "d911f954652c51cca9639627a2a6c5f5eb2fc49dd40cb502973d5c36c5ffea85",
+    "public/og/de.png": "71deca8a99041f5aa93d44ad779403e25c119e7080c19ec5a994dc05b37058e7",
+    "public/favicon.ico": "def24977963f4dff9769220d1357300a8b4deeb99a9c6f005d75b0b5e21382b8",
+    "public/apple-touch-icon.png": "3a6e5e292d5e8b811be83473bc77f4bc6df3b21ff54ae78af8fb04f7e19107b8"
+  }
+}

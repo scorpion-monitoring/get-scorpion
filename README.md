@@ -4,8 +4,8 @@ The public landing page of [Scorpion](https://github.com/scorpion-monitoring/sco
 <https://scorpion.bi.denbi.de/>, in English (`/`) and German (`/de/`).
 
 The page introduces Scorpion, links to the docs, the demo instance and the releases, lists the
-instances that run it (de.NBI / ELIXIR-DE at `/denbi/`, NFDI4Biodiversity and NFDI4Microbiota at
-`/nfdi/`) and the organisations that fund and host it, and shows upcoming events.
+instances that run it (de.NBI / ELIXIR-DE at `/denbi/`, the NFDI consortia at `/nfdi/`) and the
+organisations that fund and host it, and shows upcoming events.
 
 ## Why this is a separate repository
 
@@ -51,9 +51,18 @@ Before you open a pull request, run the checks that CI runs:
 pnpm format:check
 pnpm lint          # ESLint
 pnpm events:check  # validates events/*.yaml against events/events.schema.json
-pnpm test          # unit tests of the events feed (node --test)
+pnpm test          # unit tests (node --test): events feed, structured data, Open Graph images up to date
 pnpm check         # message key parity (EN/DE), then astro check: types, message keys, data files
 ```
+
+`pnpm build` ends with `scripts/check-dist.mjs`, which checks the built pages: no inline styles, no
+inline script apart from the one JSON-LD block, canonical and Open Graph URLs, the Bioschemas markup
+against its profile, `robots.txt` and `sitemap.xml`.
+
+`pnpm og-images` makes the Open Graph images (`public/og/{en,de}.png`) and the favicons, which are
+committed. Run it after changing the hero title, the logo or the script; `pnpm test` fails until you
+do. It downloads the Inter font once (pinned by sha256), so it needs network access the first time.
+See [CONTRIBUTING.md](CONTRIBUTING.md#change-the-meta-texts-or-the-open-graph-image).
 
 `pnpm events:build` validates the events and writes the feed, without past events, to the
 git-ignored `.cache/events/events.json` (`--out <file>` for another path, `--now <date-time>` to

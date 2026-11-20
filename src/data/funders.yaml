@@ -2,11 +2,14 @@
 # `role` and `logo.alt` are message keys. The logos are placeholders until permission is recorded in
 # ASSETS.md; to use a real logo, add `logo.src` (and `logo.dark` if needed), for example
 # `src: ../assets/logos/dfg.svg`.
+# `ror` is the organisation's ROR id, used by the structured data (docs/plan.md §7, software.yaml).
+# NFDI4Biodiversity has none (checked on ror.org, 2026-11-20).
 
 denbi:
   order: 1
   name: de.NBI / ELIXIR-DE
   url: https://www.denbi.de/
+  ror: https://ror.org/01vmpm840
   role: funder_role_powered_by
   logo:
     alt: logo_alt_denbi_elixir_de
@@ -16,6 +19,7 @@ ipk:
   order: 2
   name: IPK Gatersleben
   url: https://www.ipk-gatersleben.de/
+  ror: https://ror.org/02skbsp27
   role: funder_role_hosted_by
   logo:
     alt: logo_alt_ipk
@@ -34,6 +38,7 @@ dfg:
   order: 4
   name: DFG
   url: https://www.dfg.de/
+  ror: https://ror.org/018mejw64
   role: funder_role_funded_by
   logo:
     alt: logo_alt_dfg

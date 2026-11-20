@@ -1,0 +1,47 @@
+---
+// The Bioschemas ComputationalTool markup of Scorpion as JSON-LD (docs/plan.md §7), built from
+// src/data/software.yaml, funders.yaml and links.yaml, the page messages and the pinned release.
+//
+// This is the pages' only inline <script>, and it is a data block, not a script (§6): its type is
+// application/ld+json, which browsers never execute, so `script-src 'self'` doesn't apply, and
+// serializeJsonLd() escapes every `<`, so no data can end the element. Crawlers read JSON-LD only
+// inline. `pnpm build` checks the result against the profile (scripts/check-dist.mjs).
+import { getCollection } from 'astro:content';
+import { computationalTool } from '../lib/bioschemas';
+import { getSoftware } from '../lib/data';
+import { getRelease } from '../lib/generated';
+import { t } from '../lib/i18n';
+import { serializeJsonLd } from '../lib/jsonld';
+import { pageUrl } from '../lib/pages';
+import type { Locale } from '../paraglide/runtime.js';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const software = await getSoftware();
+const organisations = Object.fromEntries(
+  (await getCollection('funders')).map((e) => [e.id, e.data]),
+);
+// The schema gives every link either `url` or `urls` with every locale.
+const links = Object.fromEntries(
+  (await getCollection('links')).flatMap((e) => {
+    const url = e.data.urls?.[locale] ?? e.data.url;
+    return url ? [[e.id, url]] : [];
+  }),
+);
+const node = computationalTool(
+  software,
+  { organisations, links, text: (key) => t(key, locale) },
+  {
+    // One thing, described on two pages: the same @id on both.
+    id: `${pageUrl('home', 'en', Astro.site)}#software`,
+    url: pageUrl('home', locale, Astro.site),
+    locale,
+    version: getRelease().version,
+  },
+);
+---
+
+<script is:inline type="application/ld+json" set:html={serializeJsonLd(node)} />

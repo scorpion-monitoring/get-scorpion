@@ -14,10 +14,10 @@ denbi:
     height: 64
 nfdi:
   order: 2
-  name: NFDI4Biodiversity + NFDI4Microbiota
+  name: NFDI
   url: https://scorpion.bi.denbi.de/nfdi/
   description: instance_nfdi_description
   logo:
-    alt: logo_alt_nfdi4biodiversity_nfdi4microbiota
+    alt: logo_alt_nfdi
     width: 200
     height: 64

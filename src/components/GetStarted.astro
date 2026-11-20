@@ -14,21 +14,21 @@ const options = { locale };
 
 const cards = [
   {
-    link: await getLink('docs'),
+    link: await getLink('docs', locale),
     icon: 'book-open',
     title: m.get_started_docs_title({}, options),
     text: m.get_started_docs_text({}, options),
     action: m.get_started_docs_link({}, options),
   },
   {
-    link: await getLink('api_reference'),
+    link: await getLink('api_reference', locale),
     icon: 'file-code',
     title: m.get_started_api_title({}, options),
     text: m.get_started_api_text({}, options),
     action: m.get_started_api_link({}, options),
   },
   {
-    link: await getLink('demo'),
+    link: await getLink('demo', locale),
     icon: 'monitor-play',
     title: m.get_started_demo_title({}, options),
     text: m.get_started_demo_text({}, options),
