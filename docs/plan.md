@@ -1,6 +1,6 @@
 # Plan: Scorpion landing page (`get-scorpion`)
 
-Status: reviewed, 2026-11-19. M1 (bootstrap) and M2 (scaffold) are done; corrections found during them are folded in below.
+Status: reviewed, 2026-11-19. M1 (bootstrap), M2 (scaffold) and M3 (static sections) are done; corrections found during them are folded in below.
 
 This is the public landing page at `https://scorpion.bi.denbi.de/`. It belongs to neither
 instance (`/denbi/`, `/nfdi/`) and lives outside the application repo
@@ -19,6 +19,15 @@ instance (`/denbi/`, `/nfdi/`) and lives outside the application repo
 | Contact           | GitHub instead of a mailto link                                                                      |
 | Languages         | English (default, at `/`) and German (`/de/`), using an i18n package                                 |
 
+Decisions from the M3 question round (2026-11-20), closing §12.2 to §12.4:
+
+| Topic       | Decision                                                                                                                                                                 |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| User docs   | The knowledge base at `https://scorpion-monitoring.github.io/knowledgebase/` (user, administrator and developer guides). The "User docs" card and nav "Docs" link there. |
+| Catalogue   | Not linked: `/denbi/catalog/services` still returns 404. Revisit after the instances run the release that has it.                                                        |
+| Contact     | The new-issue chooser of the application repo, `https://github.com/scorpion-monitoring/scorpion/issues/new/choose`.                                                      |
+| GitHub icon | Links to the application repo `https://github.com/scorpion-monitoring/scorpion`, not to this repo.                                                                       |
+
 Facts checked on 2026-11-19:
 
 - The application repo uses the **ISC** licence. Its default branch is `dev`, at commit `490d48d`.
@@ -27,23 +36,23 @@ Facts checked on 2026-11-19:
 - `docs-export.zip` holds `modules.json` (14 modules with internal names such as "Audit log" and "Blob store"), `docs-export.json` (`scorpionVersion`) and **`screenshots/` with light and dark PNGs** for each user journey.
 - GitHub Discussions is **disabled** on the application repo. Issues are enabled.
 - `/`, `/denbi/`, `/nfdi/`, `/denbi/docs` and the demo all return 200. `/denbi/catalog/services` returns **404**, so the live instance is probably still on an older version.
-- The application repo's `docs/` folder holds design and sprint documents, not user documentation.
+- The application repo's `docs/` folder holds design and sprint documents, not user documentation. User documentation lives in a separate knowledge base at `https://scorpion-monitoring.github.io/knowledgebase/` (checked 2026-11-20).
 
 ## 2. Page sections and content sources
 
 The overall shape stays the same. Text marked "msg" lives in the i18n message files (EN and DE), and
 structured data lives in `src/data/*.yaml`, validated by a Zod schema through Astro content collections.
 
-| #   | Section             | Content                                                                                               | Source                                               |
-| --- | ------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| 1   | Nav                 | Get Scorpion (releases), Docs, Contact (GitHub), GitHub icon (new repo), EN/DE switcher               | `src/data/links.yaml`, msg                           |
-| 2   | Hero                | "Streamlining Federated KPI Monitoring", one paragraph, logo, and "Current release vX.Y.Z"            | msg; version from the docs export (§3)               |
-| 3   | Get started         | User docs, API reference (`/denbi/docs`), Demo instance                                               | `links.yaml`, msg                                    |
-| 4   | Upcoming events     | Rendered at runtime from `/events/events.json`; hidden when there are no upcoming events              | events feed (§4)                                     |
-| 5   | Available instances | de.NBI / ELIXIR-DE and NFDI4Biodiversity + NFDI4Microbiota: logo, one line, "Visit"                   | `instances.yaml`, msg                                |
-| 6   | Features            | About 9 cards (list below)                                                                            | msg (hand-written); screenshots from the docs export |
-| 7   | Funding and support | de.NBI/ELIXIR-DE (powered by), IPK (hosted by), NFDI4Biodiversity (developed within), DFG (funded by) | `funders.yaml`                                       |
-| 8   | Footer              | Logo, docs, GitHub, imprint and privacy (IPK, per locale), "Contact via GitHub", release line         | `links.yaml`, msg                                    |
+| #   | Section             | Content                                                                                                  | Source                                               |
+| --- | ------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| 1   | Nav                 | Get Scorpion (releases), Docs (knowledge base), Contact (GitHub), GitHub icon (app repo), EN/DE switcher | `src/data/links.yaml`, msg                           |
+| 2   | Hero                | "Streamlining Federated KPI Monitoring", one paragraph, logo, and "Current release vX.Y.Z"               | msg; version from the docs export (§3)               |
+| 3   | Get started         | User docs (knowledge base), API reference (`/denbi/docs`), Demo instance                                 | `links.yaml`, msg                                    |
+| 4   | Upcoming events     | Rendered at runtime from `/events/events.json`; hidden when there are no upcoming events                 | events feed (§4)                                     |
+| 5   | Available instances | de.NBI / ELIXIR-DE and NFDI4Biodiversity + NFDI4Microbiota: logo, one line, "Visit"                      | `instances.yaml`, msg                                |
+| 6   | Features            | About 9 cards (list below)                                                                               | msg (hand-written); screenshots from the docs export |
+| 7   | Funding and support | de.NBI/ELIXIR-DE (powered by), IPK (hosted by), NFDI4Biodiversity (developed within), DFG (funded by)    | `funders.yaml`                                       |
+| 8   | Footer              | Logo, docs, GitHub, imprint and privacy (IPK, per locale), "Contact via GitHub", release line            | `links.yaml`, msg                                    |
 
 **Feature cards (draft wording, for your confirmation; nothing beyond the handover list):**
 
@@ -89,13 +98,15 @@ astro.config.mjs        # output: 'static', site, i18n { defaultLocale: 'en', lo
 messages/{en,de}.json   # Paraglide JS (inlang) messages, compiled, typed, tree-shaken
 project.inlang/         # Paraglide project settings; the message-format plugin is loaded from node_modules, not a CDN
 src/pages/index.astro, src/pages/de/index.astro   # both render <Landing locale=…>
-src/components/         # Nav, Hero, GetStarted, Events, Instances, Features, Funding, Footer, LangSwitch
+src/content.config.ts   # content collections for src/data/*.yaml, with Zod schemas
+src/components/         # Nav, Hero, GetStarted, Events, Instances, Features, Funding, Footer, LangSwitch, Logo, Icon, GitHubMark
+src/lib/                # data and message helpers
 src/data/               # links.yaml, instances.yaml, funders.yaml, screenshots.yaml
-src/assets/logos/       # SVG logos (light/dark variants where needed)
+src/assets/logos/       # logos (SVG where possible; light/dark variants where needed)
 src/styles/app.css      # Tailwind + daisyUI with both Scorpion themes (copied, see §6)
 src/scripts/events.ts
 events/                 # *.yaml + events.schema.json
-scripts/                # fetch-docs-export.mjs, build-events.mjs, check-theme-drift.mjs
+scripts/                # check-messages.mjs, fetch-docs-export.mjs, build-events.mjs, check-theme-drift.mjs
 docker/                 # Dockerfile, nginx.conf
 public/                 # robots.txt, favicon.svg, events/events.json (empty fallback)
 ```
@@ -105,18 +116,19 @@ public/                 # robots.txt, favicon.svg, events/events.json (empty fal
   - No adapter package: `@inlang/paraglide-astro` is deprecated on npm. The Vite plugin from `@inlang/paraglide-js` goes into `astro.config.mjs` under `vite.plugins`.
   - Each page passes its locale to every message call (`m.key({}, { locale })`). This needs no locale strategy, no `setLocale()` and no Astro middleware, and it works with `prefixDefaultLocale: false`. (Paraglide's own SSG guide assumes a prefix for every locale and a middleware.)
   - `paraglide-js init` points `project.inlang/settings.json` at plugin modules on jsDelivr, which would fetch unpinned code at every build. Instead `@inlang/plugin-message-format` is a dev dependency, pinned by the lockfile, and `modules` names its file in `node_modules`. Module paths resolve from the repository root, not from `project.inlang/`. A wrong path is only a warning, but then every message is missing and `pnpm check` fails.
-  - A key missing from one locale's file falls back to English without a warning. A key-parity check for `messages/` is a candidate for M7.
+  - A key missing from one locale's file falls back to English without a warning. Since M3, `scripts/check-messages.mjs` fails when `en.json` and `de.json` don't have the same keys; `pnpm check` runs it before `astro check`, so CI runs it in the `build` job.
   - The output has no inline `<script>`, `<style>` or `style=""`. The built HTML has no script at all, and only one stylesheet. The page never redirects automatically by `Accept-Language`. It sets `<html lang>`, `hreflang` alternates and a visible EN/DE switcher.
 - Commands: `pnpm install`, `pnpm dev`, `pnpm build` (runs fetch-docs-export first, from M4), `pnpm preview`, `pnpm lint`, `pnpm check`, and `docker compose up` to preview the real nginx config. Node LTS is pinned in `.nvmrc` and `engines.node` (Node 26, LTS since 2026-10-28), pnpm in `packageManager` (pnpm 12). The application repo is still on Node 24 and pnpm 10; the two need not move together.
 - Node 25 and later no longer ship Corepack. Locally, run `npm install --global corepack` once before `corepack enable`. CI uses `pnpm/action-setup` and isn't affected.
 - pnpm 12 fails `pnpm install` when a dependency has a build script that isn't allowed (`ERR_PNPM_IGNORED_BUILDS`). In M2 no dependency has one, so there is no `allowBuilds` list and no `pnpm-workspace.yaml`. Astro 7 builds with Vite 8 and rolldown, so esbuild isn't in the tree, and sharp 0.35 installs prebuilt binaries without a script. Add a package to `allowBuilds` in `pnpm-workspace.yaml` only when an install fails this way.
 - pnpm 12 also enforces a minimum release age by default. It rejected an Astro patch released the day before, and `pnpm add` then wrote an exclusion into `pnpm-workspace.yaml` by itself. Don't commit such exclusions; pick the previous version instead.
+- Data files (found in M3): each `src/data/*.yaml` is a map from entry id to fields, loaded with Astro's `file()` loader. On its own, `file()` only logs an error when the file is missing or isn't valid YAML, and keeps the entries cached from the last build, so `src/content.config.ts` wraps it to fail the build instead. Schema errors (unknown fields, non-`https:` URLs, unknown message keys) fail `pnpm check` and `pnpm build`; a logo path that doesn't exist fails only `pnpm build`. Visible text stays in `messages/`: the YAML holds message keys, apart from organisation names.
 - TypeScript stays on 6.0.x: `typescript-eslint` supports `<6.1` and `@astrojs/check` supports `^6`, while TypeScript 7 is current.
 
 ## 6. Theme, assets, accessibility, privacy
 
 - **Theme:** copy the two `@plugin 'daisyui/theme'` blocks verbatim into `src/styles/app.css`, with a header comment naming the source file and commit (`490d48d`). Copying keeps builds reproducible. `scripts/check-theme-drift.mjs` runs weekly and opens an issue if the upstream tokens change. The page follows the system theme only: no toggle and no storage.
-- **Logos:** use SVG wherever possible. Each logo needs written permission or a published brand policy (de.NBI, ELIXIR-DE, NFDI4Biodiversity, NFDI4Microbiota, IPK, DFG). This is recorded in `ASSETS.md` with source URL, date and terms. Where a logo fails contrast on dark, ship a dark variant through `<picture><source media="(prefers-color-scheme: dark)">`.
+- **Logos:** use SVG wherever possible. Scorpion's own logo has no SVG upstream: it is the light and dark PNG wordmark ("Powered By Scorpion") from `apps/web/src/lib/assets/` at `490d48d`, optimised to WebP by `astro:assets` (the 2× variant is capped at the 128 px source height). Until permission is recorded, organisation logos render as a neutral placeholder (the name in a dashed box at the logo's size, with the final alt text); swapping in a file is a YAML change (`logo.src`, `logo.dark`). Each logo needs written permission or a published brand policy (de.NBI, ELIXIR-DE, NFDI4Biodiversity, NFDI4Microbiota, IPK, DFG). This is recorded in `ASSETS.md` with source URL, date and terms. Where a logo fails contrast on dark, ship a dark variant through `<picture><source media="(prefers-color-scheme: dark)">`.
 - **Images:** screenshots go through `astro:assets` (sharp) as AVIF or WebP with fixed `width` and `height` and lazy loading. The light and dark screenshot pairs use the same `<picture>` media switch.
 - **Badges:** download the OpenSSF badge SVGs at build time as static files. Hotlinking them would make a third-party request at runtime.
 - **No third-party requests:** system fonts, no analytics, no CDN. A strict CSP is set in `nginx.conf`: `default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'`. Astro's `build.inlineStylesheets: 'never'` keeps `style-src` strict. Further headers: HSTS (if the proxy doesn't set it), `X-Content-Type-Options`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Permissions-Policy`.
@@ -169,9 +181,9 @@ Branch protection on `main` (a repository ruleset): pull request required with *
 ## 12. Risks and open points
 
 1. **Who runs the reverse proxy, and how is `/` routed today?** This is needed for M8 and for choosing between the events timer and a sidecar. It also decides whether the HSTS and CSP headers come from the proxy or the container.
-2. **User documentation does not exist yet** in the rebuild. The User Docs card needs a target: the app repo README, a future docs site, or hide the card until one exists. The old readthedocs is stale.
-3. **The live instances seem to lag behind** (`/denbi/catalog/services` returns 404). Link the catalogue only after the rollout, or link to `/docs` only.
-4. **Contact:** Discussions is off. Either enable Discussions on `scorpion-monitoring/scorpion`, or link to the new-issue chooser.
+2. ~~**User documentation does not exist yet.**~~ Resolved in M3: it exists as the knowledge base at `https://scorpion-monitoring.github.io/knowledgebase/` (§1).
+3. **The live instances seem to lag behind** (`/denbi/catalog/services` returns 404). Decided in M3: the catalogue isn't linked until the rollout (§1). Still open: when to add it.
+4. ~~**Contact:**~~ Resolved in M3: the new-issue chooser (§1).
 5. **IPK legal pages:** confirm that IPK's imprint and privacy policy cover this host, including nginx access logs and the GitHub-hosted events asset, which is fetched server-side. Get the EN and DE URLs.
 6. **Logo permissions** for six organisations, plus SVG sources and dark variants.
 7. **German copy** needs a native-speaker review. Feature wording needs your sign-off (§2).

@@ -1,0 +1,23 @@
+# Scorpion instances (docs/plan.md §2, section 5). Schema: src/content.config.ts.
+# `description` and `logo.alt` are message keys. The logos are placeholders until permission is
+# recorded in ASSETS.md; to use a real logo, add `logo.src` (and `logo.dark` if needed), for example
+# `src: ../assets/logos/denbi.svg`.
+
+denbi:
+  order: 1
+  name: de.NBI / ELIXIR-DE
+  url: https://scorpion.bi.denbi.de/denbi/
+  description: instance_denbi_description
+  logo:
+    alt: logo_alt_denbi_elixir_de
+    width: 200
+    height: 64
+nfdi:
+  order: 2
+  name: NFDI4Biodiversity + NFDI4Microbiota
+  url: https://scorpion.bi.denbi.de/nfdi/
+  description: instance_nfdi_description
+  logo:
+    alt: logo_alt_nfdi4biodiversity_nfdi4microbiota
+    width: 200
+    height: 64

@@ -1,0 +1,41 @@
+# Funding and support (docs/plan.md §2, section 7). Schema: src/content.config.ts.
+# `role` and `logo.alt` are message keys. The logos are placeholders until permission is recorded in
+# ASSETS.md; to use a real logo, add `logo.src` (and `logo.dark` if needed), for example
+# `src: ../assets/logos/dfg.svg`.
+
+denbi:
+  order: 1
+  name: de.NBI / ELIXIR-DE
+  url: https://www.denbi.de/
+  role: funder_role_powered_by
+  logo:
+    alt: logo_alt_denbi_elixir_de
+    width: 160
+    height: 64
+ipk:
+  order: 2
+  name: IPK Gatersleben
+  url: https://www.ipk-gatersleben.de/
+  role: funder_role_hosted_by
+  logo:
+    alt: logo_alt_ipk
+    width: 160
+    height: 64
+nfdi4biodiversity:
+  order: 3
+  name: NFDI4Biodiversity
+  url: https://www.nfdi4biodiversity.org/
+  role: funder_role_developed_within
+  logo:
+    alt: logo_alt_nfdi4biodiversity
+    width: 160
+    height: 64
+dfg:
+  order: 4
+  name: DFG
+  url: https://www.dfg.de/
+  role: funder_role_funded_by
+  logo:
+    alt: logo_alt_dfg
+    width: 160
+    height: 64
