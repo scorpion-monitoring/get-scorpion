@@ -94,7 +94,31 @@ your system or browser to dark mode.
 
 ## Deploy
 
-_Filled in with M8 (container and deployment)._
+`docker/Dockerfile` builds two images ([docs/plan.md](docs/plan.md) §9):
+
+- `web` (default target): nginx on port 8080 as a non-root user, with a read-only root filesystem
+  (`/tmp` must be writable). It sets every security header itself (CSP, HSTS, `nosniff`,
+  `Referrer-Policy`, `Permissions-Policy`; [docker/security-headers.conf](docker/security-headers.conf))
+  and answers `/healthz`.
+- `events`: [scripts/fetch-events.mjs](scripts/fetch-events.mjs), the sidecar that keeps
+  `/srv/events/events.json` and `events.jsonld` current from the `events` release every 15 minutes.
+  The web container serves `/events/` from that shared volume, with the image's empty feeds as the
+  fallback.
+
+Run both locally:
+
+```sh
+docker build -f docker/Dockerfile -t get-scorpion .
+docker build -f docker/Dockerfile --target events -t get-scorpion-events .
+docker volume create get-scorpion-events
+docker run --rm -v get-scorpion-events:/srv/events -u 0 --entrypoint chown get-scorpion-events 1000:1000 /srv/events
+docker run -d --name get-scorpion-events -v get-scorpion-events:/srv/events get-scorpion-events
+docker run --rm --read-only --tmpfs /tmp -v get-scorpion-events:/srv/events:ro -p 8080:8080 get-scorpion
+```
+
+`release.yml` pushes both images to ghcr.io on every push to `main` (tags: commit sha and `latest`,
+with SBOM and a signed provenance attestation). Production runs on the de.NBI Cloud Bielefeld RKE2
+cluster; the deployment, its pins and the route for `/` live in the infrastructure repository.
 
 ## Contributing, security and licence
 
