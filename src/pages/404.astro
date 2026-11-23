@@ -1,0 +1,44 @@
+---
+// The 404 page, served by nginx for any missing path (docker/nginx.conf, docs/plan.md §9). It has
+// no locale of its own, so it shows both languages, is not in src/lib/pages.ts (no sitemap entry,
+// canonical URL or hreflang) and tells crawlers not to index it.
+import { m } from '../paraglide/messages.js';
+import { pagePath } from '../lib/pages';
+import '../styles/app.css';
+
+const sections = (['en', 'de'] as const).map((locale) => ({
+  locale,
+  title: m.not_found_title({}, { locale }),
+  text: m.not_found_text({}, { locale }),
+  home: m.not_found_home({}, { locale }),
+  href: pagePath('home', locale),
+}));
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>{sections[0].title} · {m.site_name({}, { locale: 'en' })}</title>
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+  </head>
+  <body class="min-h-screen bg-base-100 text-base-content">
+    <main class="mx-auto max-w-5xl px-4 py-16">
+      {sections.map(({ locale, title, text, home, href }) => (
+        <section lang={locale} class="mb-12">
+          {locale === 'en' ? (
+            <h1 class="mb-4 text-3xl font-bold">{title}</h1>
+          ) : (
+            <h2 class="mb-4 text-3xl font-bold">{title}</h2>
+          )}
+          <p class="mb-4">{text}</p>
+          <a class="btn btn-primary" href={href}>
+            {home}
+          </a>
+        </section>
+      ))}
+    </main>
+  </body>
+</html>

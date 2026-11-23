@@ -165,10 +165,10 @@ event's `id` and `url` stable once it is published. A `training` arrives as "Wor
 other types arrive without a TeSS event type, because TeSS doesn't read `eventType` (docs/plan.md
 §12.11). Curators can set it in TeSS.
 
-**At M8:** once `https://scorpion.bi.denbi.de/events/events.jsonld` serves the file (the host timer
+**At M8:** once `https://scorpion.bi.denbi.de/events/events.jsonld` serves the file (the events sidecar
 fetches it from the release), you may change the source URL to it. TeSS then needs to approve the
 source again. Event URLs don't change, so TeSS keeps the same events. Keeping the release URL is
-fine too; it doesn't depend on the host timer.
+fine too; it doesn't depend on the sidecar.
 
 ### Bump the Scorpion release
 

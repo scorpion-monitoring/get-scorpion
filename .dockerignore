@@ -1,0 +1,14 @@
+# Only what the image build needs (docker/Dockerfile); generated files are rebuilt inside it.
+.git
+.github
+.astro
+.cache
+dist
+docs
+node_modules
+src/assets/generated
+src/paraglide
+project.inlang/cache
+*.log
+.env
+.env.*

@@ -100,5 +100,8 @@
   "logo_alt_dfg": "Logo der DFG",
   "footer_label": "Fußzeile",
   "footer_contact": "Kontakt über GitHub",
-  "footer_release": "Aktuelle Version: Scorpion {version}"
+  "footer_release": "Aktuelle Version: Scorpion {version}",
+  "not_found_title": "Seite nicht gefunden",
+  "not_found_text": "Unter dieser Adresse gibt es keine Seite. Vielleicht wurde sie verschoben, oder der Link ist falsch.",
+  "not_found_home": "Zur Startseite von Scorpion"
 }
