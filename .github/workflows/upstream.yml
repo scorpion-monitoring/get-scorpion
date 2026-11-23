@@ -41,6 +41,9 @@ jobs:
       # Downloads the zip of the latest release, checks it like the build does, and rewrites the file.
       - name: Bump
         id: bump
+        env:
+          # Read-only token for the GitHub API (rate limit, docs/plan.md §3).
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           pnpm bump-release
           if git diff --quiet -- scorpion-release.json; then
@@ -117,6 +120,9 @@ jobs:
       # Exit code 1 is drift, which the issue reports; any other failure fails the job.
       - name: Compare the themes
         id: check
+        env:
+          # Read-only token for the GitHub API (rate limit, docs/plan.md §3).
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set +e
           pnpm check:theme-drift --report "$RUNNER_TEMP/theme-drift.md"

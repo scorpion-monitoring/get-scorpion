@@ -3,8 +3,8 @@
 // `pnpm build`, look at the page, and open a pull request with the changed file.
 //
 // GitHub reports no digest for the asset at the moment, so the hash is computed from this
-// download; when GitHub does report one, it must match. Uses the public API without a token
-// (60 requests an hour per IP address).
+// download; when GitHub does report one, it must match. Uses the API with GITHUB_TOKEN if it is
+// set (the workflow sets it), otherwise without a token (60 requests an hour per IP address).
 import { writeFile } from 'node:fs/promises';
 import {
   ASSET_NAME,
@@ -16,21 +16,16 @@ import {
   checkDocsExport,
   download,
   extractEntries,
+  githubApi,
   readRelease,
   sha256,
   validateRelease,
 } from './fetch-docs-export.mjs';
 
 const requested = process.argv[2];
-const api = `https://api.github.com/repos/${REPO}/releases/${
-  requested ? `tags/${encodeURIComponent(requested)}` : 'latest'
-}`;
-
-const { body } = await download(api, {
-  maxBytes: 1024 * 1024,
-  accept: 'application/vnd.github+json',
-});
-const info = JSON.parse(body.toString('utf8'));
+const info = await githubApi(
+  `/repos/${REPO}/releases/${requested ? `tags/${encodeURIComponent(requested)}` : 'latest'}`,
+);
 const asset = info.assets?.find((a) => a.name === ASSET_NAME);
 if (!asset) throw new Error(`Release ${info.tag_name} has no ${ASSET_NAME}`);
 
