@@ -129,14 +129,22 @@ async function readScreenshotMap() {
 
 /**
  * Downloads an https URL into memory, following redirects, with no credentials and at most
- * `maxBytes`. Returns the body and the response headers.
+ * `maxBytes`. Returns the body and the response headers. `token` is only for the GitHub API (see
+ * githubApi()); a request with a token follows no redirect, so the token goes nowhere else.
  */
-export async function download(url, { maxBytes, timeoutMs = 60_000, accept } = {}) {
+export async function download(url, { maxBytes, timeoutMs = 60_000, accept, token } = {}) {
   if (!url.startsWith('https://')) throw new Error(`Refusing to download a non-https URL: ${url}`);
+  if (token && !url.startsWith('https://api.github.com/')) {
+    throw new Error(`Refusing to send a token to ${url}`);
+  }
   const response = await fetch(url, {
-    redirect: 'follow',
+    redirect: token ? 'error' : 'follow',
     credentials: 'omit',
-    headers: { 'user-agent': 'get-scorpion-build', ...(accept ? { accept } : {}) },
+    headers: {
+      'user-agent': 'get-scorpion-build',
+      ...(accept ? { accept } : {}),
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+    },
     signal: AbortSignal.timeout(timeoutMs),
   });
   if (!response.url.startsWith('https://')) {
@@ -154,6 +162,21 @@ export async function download(url, { maxBytes, timeoutMs = 60_000, accept } = {
     chunks.push(chunk);
   }
   return { body: Buffer.concat(chunks), headers: response.headers };
+}
+
+/**
+ * GETs a GitHub REST API path (`/repos/…`) and parses the JSON. Uses GITHUB_TOKEN when it is set,
+ * as in the workflows: without a token the API allows 60 requests an hour per IP address, which
+ * GitHub's shared runners can use up (an Upstream run failed with 403 on 2026-11-23). Locally it
+ * works without one.
+ */
+export async function githubApi(path) {
+  const { body } = await download(`https://api.github.com${path}`, {
+    maxBytes: 1024 * 1024,
+    accept: 'application/vnd.github+json',
+    token: process.env.GITHUB_TOKEN || undefined,
+  });
+  return JSON.parse(body.toString('utf8'));
 }
 
 export const sha256 = (buffer) => createHash('sha256').update(buffer).digest('hex');

@@ -12,7 +12,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
-import { REPO, download } from './fetch-docs-export.mjs';
+import { REPO, download, githubApi } from './fetch-docs-export.mjs';
 
 const LOCAL = join(import.meta.dirname, '..', 'src', 'styles', 'app.css');
 const UPSTREAM_PATH = 'apps/web/src/app.css';
@@ -71,11 +71,7 @@ export function compareThemes(here, upstream) {
 }
 
 async function latestRelease() {
-  const { body } = await download(`https://api.github.com/repos/${REPO}/releases/latest`, {
-    maxBytes: 1024 * 1024,
-    accept: 'application/vnd.github+json',
-  });
-  const tag = JSON.parse(body.toString('utf8')).tag_name;
+  const { tag_name: tag } = await githubApi(`/repos/${REPO}/releases/latest`);
   if (typeof tag !== 'string' || !/^v\d+\.\d+\.\d+$/.test(tag)) {
     throw new Error(`unexpected latest release tag ${JSON.stringify(tag)}`);
   }
