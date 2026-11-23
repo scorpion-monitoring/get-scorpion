@@ -100,5 +100,8 @@
   "logo_alt_dfg": "DFG logo",
   "footer_label": "Footer",
   "footer_contact": "Contact via GitHub",
-  "footer_release": "Current release: Scorpion {version}"
+  "footer_release": "Current release: Scorpion {version}",
+  "not_found_title": "Page not found",
+  "not_found_text": "There is no page at this address. It may have moved, or the link may be wrong.",
+  "not_found_home": "Go to the Scorpion home page"
 }
