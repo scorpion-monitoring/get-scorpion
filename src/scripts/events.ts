@@ -177,8 +177,13 @@ async function main() {
   show();
   pager.hidden = pages < 2;
   section.hidden = false;
-  // The browser looked for the fragment before the events existed; do it now.
+  // The browser looked for the fragment before the events existed; do it now. Until the load event,
+  // Chrome keeps looking for the fragment too: if it finds the card first, it moves focus to the
+  // (unfocusable) card, i.e. to <body>. So reveal again once loading has finished.
   reveal();
+  if (document.readyState !== 'complete') {
+    window.addEventListener('load', () => setTimeout(reveal), { once: true });
+  }
 }
 
 main().catch(() => {
