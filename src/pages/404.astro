@@ -1,7 +1,8 @@
 ---
 // The 404 page, served by nginx for any missing path (docker/nginx.conf, docs/plan.md §9). It has
 // no locale of its own, so it shows both languages, is not in src/lib/pages.ts (no sitemap entry,
-// canonical URL or hreflang) and tells crawlers not to index it.
+// canonical URL or hreflang) and tells crawlers not to index it. It loads the Matomo tracker like
+// every other page (src/scripts/matomo.ts).
 import { m } from '../paraglide/messages.js';
 import { pagePath } from '../lib/pages';
 import '../styles/app.css';
@@ -40,5 +41,6 @@ const sections = (['en', 'de'] as const).map((locale) => ({
         </section>
       ))}
     </main>
+    <script src="../scripts/matomo.ts"></script>
   </body>
 </html>

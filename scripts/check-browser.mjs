@@ -10,7 +10,9 @@
 //   <main>; no horizontal scrolling; at 375 px the nav <details> menu opens and shows its links;
 // - no request leaves the origin (each one is aborted and reported), no console error, no uncaught
 //   exception and no CSP violation;
-// - the events section: hidden with the fallback, five cards and a pager with the fixtures.
+// - the events section: hidden with the fallback, five cards and a pager with the fixtures;
+// - the Matomo tracker (src/scripts/matomo.ts): the page loads /matomo/matomo.js from its own origin
+//   under the CSP (stubbed here, Matomo isn't part of dist/) and queues cookieless tracking for site 1.
 // Plus, per locale, that `#event-<id>` opens the pager page of that event and focuses its heading.
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
@@ -36,6 +38,16 @@ const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22a', 'wcag2
 const NOW = Date.parse('2026-11-20T12:00:00Z');
 const FIXTURE_EVENTS = 6;
 const LAST_EVENT = 'summit';
+
+// The commands src/scripts/matomo.ts queues in window._paq, in order.
+const MATOMO_COMMANDS = [
+  ['setDoNotTrack', true],
+  ['disableCookies'],
+  ['setTrackerUrl', '/matomo/matomo.php'],
+  ['setSiteId', '1'],
+  ['trackPageView'],
+  ['enableLinkTracking'],
+];
 
 function fixtureFeed() {
   const files = readdirSync(FIXTURES).map((name) => ({
@@ -69,7 +81,8 @@ after(async () => {
 
 /**
  * Opens `path` in a fresh context and records what must not happen: requests to another origin
- * (aborted), console errors, uncaught exceptions and CSP violations.
+ * (aborted), console errors, uncaught exceptions and CSP violations. /matomo/ is answered with a
+ * stub tracker; the page must request it and queue MATOMO_COMMANDS.
  */
 async function open(path, { scheme = 'light', width = 1280, withFeed = false } = {}) {
   const context = await browser.newContext({
@@ -79,6 +92,7 @@ async function open(path, { scheme = 'light', width = 1280, withFeed = false } =
   });
   await context.clock.setFixedTime(NOW);
   const problems = [];
+  let trackerLoaded = false;
   await context.route('**/*', (route) => {
     const url = new URL(route.request().url());
     if (url.origin !== server.origin) {
@@ -87,6 +101,14 @@ async function open(path, { scheme = 'light', width = 1280, withFeed = false } =
     }
     if (withFeed && url.pathname === '/events/events.json') {
       return route.fulfill({ json: feed, headers: { 'cache-control': 'no-cache' } });
+    }
+    if (url.pathname === '/matomo/matomo.js') {
+      trackerLoaded = true;
+      return route.fulfill({ contentType: 'text/javascript', body: '' });
+    }
+    if (url.pathname.startsWith('/matomo/')) {
+      problems.push(`unexpected Matomo request: ${url.pathname}`);
+      return route.fulfill({ status: 204 });
     }
     return route.continue();
   });
@@ -109,6 +131,13 @@ async function open(path, { scheme = 'light', width = 1280, withFeed = false } =
   const response = await feedResponse;
   if (response.status() !== 200) problems.push(`/events/events.json: HTTP ${response.status()}`);
   await page.waitForLoadState('networkidle');
+  if (!trackerLoaded) problems.push('/matomo/matomo.js was not requested');
+  const commands = await page.evaluate(() => window._paq);
+  try {
+    assert.deepEqual(commands, MATOMO_COMMANDS);
+  } catch {
+    problems.push(`window._paq is ${JSON.stringify(commands)}`);
+  }
   return { context, page, problems };
 }
 
